@@ -1,0 +1,65 @@
+{
+  "name": "@callieniera/fushi",
+  "version": "0.1.0",
+  "description": "Japanese School Grammar token normalization, bunsetsu grouping, and annotation validation.",
+  "author": "callieniera",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./kuromoji": {
+      "types": "./dist/kuromoji/index.d.ts",
+      "import": "./dist/kuromoji/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/callieniera/fushi.git"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "build": "pnpm build:library",
+    "build:library": "pnpm --filter @lib/core --filter @lib/engine-kuromoji build && pnpm build:package",
+    "build:package": "node scripts/build-package.mjs",
+    "build:app": "pnpm build:library && pnpm --filter @fushi/learning build",
+    "dev:app": "pnpm build:library && pnpm --filter @fushi/learning dev",
+    "preview:app": "pnpm build:app && pnpm --filter @fushi/learning preview",
+    "prepublishOnly": "pnpm build && pnpm typecheck && pnpm test",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter @lib/core --filter @lib/engine-kuromoji typecheck && pnpm typecheck:browser && pnpm build:library && pnpm --filter @fushi/learning typecheck",
+    "test": "pnpm --filter @lib/core --filter @lib/engine-kuromoji test",
+    "test:app:unit": "pnpm build:library && pnpm --filter @fushi/learning test",
+    "test:app:e2e": "pnpm build:app && pnpm --filter @fushi/learning test:e2e",
+    "test:app": "pnpm test:app:unit && pnpm test:app:e2e",
+    "test:browser": "pnpm build:browser && playwright test",
+    "build:browser": "pnpm build && vite build --config integration-tests/browser/vite.config.ts",
+    "typecheck:browser": "tsc -p integration-tests/browser/tsconfig.json",
+    "deploy:app": "pnpm build:app && pnpm --filter @fushi/learning exec wrangler pages deploy dist --project-name fushi-learning"
+  },
+  "dependencies": {
+    "kuromoji": "^0.1.2"
+  },
+  "devDependencies": {
+    "@lib/core": "workspace:*",
+    "@lib/engine-kuromoji": "workspace:*",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "references": [
+    { "path": "packages/core/tsconfig.build.json" },
+    { "path": "packages/engine-kuromoji/tsconfig.build.json" }
+  ],
+  "include": ["src", "packages/core/src", "packages/engine-kuromoji/src"]
+}

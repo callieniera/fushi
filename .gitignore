@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+apps/learning/public/dictionaries/
+.wrangler/
+.DS_Store
+.plans

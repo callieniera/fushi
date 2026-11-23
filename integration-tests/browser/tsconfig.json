@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "typeRoots": ["../../node_modules/@types", "../../packages/engine-kuromoji/src"],
+    "paths": {
+      "@callieniera/fushi": ["../../src/index.ts"]
+    }
+  },
+  "include": ["**/*.ts", "../../playwright.config.ts", "../../packages/engine-kuromoji/src/kuromoji-internals.d.ts"]
+}

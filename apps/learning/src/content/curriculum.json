@@ -1,0 +1,719 @@
+{
+  "lessons": [
+    {
+      "id": "bunsetsu-basics",
+      "order": 1,
+      "title": {
+        "en": "1. Phrase segments and words（文節・単語）",
+        "ja": "1. 文節と単語"
+      },
+      "mode": "modern",
+      "objectives": [
+        {
+          "en": "Identify natural phrase segments.",
+          "ja": "自然な文節を見分ける。"
+        },
+        {
+          "en": "Split each segment into school-grammar words.",
+          "ja": "各文節を学校文法の単語に分ける。"
+        }
+      ],
+      "explanation": [
+        {
+          "en": "A bunsetsu（文節） starts with an independent word and may include following particles or auxiliary verbs.",
+          "ja": "文節は自立語から始まり、その後に続く助詞や助動詞を含むことがあります。"
+        },
+        {
+          "en": "Try inserting 「ね」 at a natural boundary, then use the provided answer to check it. A tango（単語） is the smaller word unit inside a segment.",
+          "ja": "自然な切れ目に「ね」を入れてみてから、監修済みの答えで確認しましょう。単語は文節の中のより小さな単位です。"
+        },
+        {
+          "en": "For example, 食べている is split into 食べて｜いる, not treated as one word.",
+          "ja": "例えば、「食べている」は「食べて｜いる」と分け、1語とはしません。"
+        }
+      ],
+      "passageIds": [
+        "split"
+      ],
+      "exerciseIds": [
+        "split-bunsetsu",
+        "split-tango"
+      ],
+      "jflNotes": [
+        {
+          "en": "A Japanese-for-learners verb ending such as -te iru may be taught as one construction. School grammar analyzes its words and segments separately.",
+          "ja": "日本語教育では「‐ている」のような動詞の形を一つの表現として教えることがあります。学校文法では、単語と文節をそれぞれ分けて考えます。"
+        }
+      ]
+    },
+    {
+      "id": "sentence-components",
+      "order": 2,
+      "title": {
+        "en": "2. Sentence components（文の成分）",
+        "ja": "2. 文の成分"
+      },
+      "mode": "modern",
+      "objectives": [
+        {
+          "en": "Recognize subjects, predicates, and modifiers.",
+          "ja": "主語、述語、修飾語を見分ける。"
+        },
+        {
+          "en": "Distinguish component labels from 連文節.",
+          "ja": "文の成分と連文節の違いを理解する。"
+        }
+      ],
+      "explanation": [
+        {
+          "en": "A subject（主語） is what the predicate describes; a predicate（述語） expresses the action, state, or property. A modifier（修飾語） adds detail to another expression.",
+          "ja": "主語は述語が表す動作や状態の主体を示し、述語は動作、状態、性質を表します。修飾語は他の表現に詳しい意味を添えます。"
+        },
+        {
+          "en": "連文節 are combined phrase segments. Their provided relationships go beyond a single component label and must not be guessed from one particle alone.",
+          "ja": "連文節は複数の文節が結び付いたものです。その関係は一つの文の成分だけでは表せず、一つの助詞だけから推測してはいけません。"
+        }
+      ],
+      "passageIds": [
+        "basic"
+      ],
+      "exerciseIds": [
+        "basic-components"
+      ]
+    },
+    {
+      "id": "conjugation-basics",
+      "order": 3,
+      "title": {
+        "en": "3. Conjugation（活用）",
+        "ja": "3. 活用"
+      },
+      "mode": "modern",
+      "objectives": [
+        {
+          "en": "Separate a stem from its ending.",
+          "ja": "語幹と活用語尾を区別する。"
+        },
+        {
+          "en": "Connect forms from Japanese-language courses to modern six-form conjugation.",
+          "ja": "日本語教育の用語と現代語の六つの活用形を対応づける。"
+        }
+      ],
+      "explanation": [
+        {
+          "en": "Modern school grammar uses 未然形, 連用形, 終止形, 連体形, 仮定形, and 命令形.",
+          "ja": "現代の学校文法では、未然形、連用形、終止形、連体形、仮定形、命令形を使います。"
+        },
+        {
+          "en": "In 話しました, the verb 話す has stem 話 and ending し in this continuative form. The following まし and た are auxiliary verbs.",
+          "ja": "「話しました」では、動詞「話す」の語幹は「話」、連用形の語尾は「し」です。続く「まし」と「た」は助動詞です。"
+        }
+      ],
+      "passageIds": [
+        "polite"
+      ],
+      "exerciseIds": [
+        "polite-conjugation"
+      ],
+      "jflNotes": [
+        {
+          "en": "話し is the continuative form（連用形） used before ます. A Japanese-language course may call this the masu stem, but that name is a learning aid rather than one of the six 活用形.",
+          "ja": "「話し」は「ます」に続く連用形です。日本語教育では「ます形の語幹」と呼ぶことがありますが、これは学習上の呼び方で、六つの活用形の名前ではありません。"
+        }
+      ]
+    },
+    {
+      "id": "parts-of-speech",
+      "order": 4,
+      "title": {
+        "en": "4. Parts of speech（品詞）",
+        "ja": "4. 品詞"
+      },
+      "mode": "modern",
+      "objectives": [
+        {
+          "en": "Distinguish independent and supporting words.",
+          "ja": "自立語と付属語を区別する。"
+        },
+        {
+          "en": "Compare prenominal words and adjectives.",
+          "ja": "連体詞と形容詞を比較する。"
+        }
+      ],
+      "explanation": [
+        {
+          "en": "Eight independent classes are 動詞, 形容詞, 形容動詞, 名詞, 副詞, 連体詞, 接続詞, and 感動詞. The two supporting classes are 助詞 and 助動詞.",
+          "ja": "自立語は動詞、形容詞、形容動詞、名詞、副詞、連体詞、接続詞、感動詞の八つ、付属語は助詞と助動詞の二つに分類されます。"
+        },
+        {
+          "en": "大きな is a prenominal word（連体詞）; 小さい is an adjective（形容詞）. Both modify nouns, but their conjugation differs.",
+          "ja": "「大きな」は連体詞、「小さい」は形容詞です。どちらも名詞を修飾しますが、活用の仕方が異なります。"
+        },
+        {
+          "en": "Use the decision tree below to practice the classification path.",
+          "ja": "下の決定木を使って、分類の手順を練習しましょう。"
+        }
+      ],
+      "passageIds": [
+        "adjectives"
+      ],
+      "exerciseIds": [
+        "adjective-identification"
+      ]
+    },
+    {
+      "id": "particles-auxiliaries",
+      "order": 5,
+      "title": {
+        "en": "5. Particles and auxiliaries（助詞・助動詞）",
+        "ja": "5. 助詞と助動詞"
+      },
+      "mode": "modern",
+      "objectives": [
+        {
+          "en": "Distinguish particles from auxiliary verbs.",
+          "ja": "助詞と助動詞を区別する。"
+        },
+        {
+          "en": "Use context rather than surface shape alone.",
+          "ja": "形だけでなく文脈から判断する。"
+        }
+      ],
+      "explanation": [
+        {
+          "en": "助詞 attach grammatical relationships and do not conjugate. 助動詞 attach meanings such as politeness, tense, negation, or assertion and generally conjugate.",
+          "ja": "助詞は文法関係を示し、活用しません。助動詞は丁寧さ、時制、否定、断定などの意味を添え、一般的に活用します。"
+        },
+        {
+          "en": "In 話しました, まし is part of ます and た marks past tense; both are auxiliary verbs. Similar-looking words such as の, に, ない, だ, and そう require contextual analysis.",
+          "ja": "「話しました」では「まし」は「ます」の一部、「た」は過去を表します。どちらも助動詞です。「の」「に」「ない」「だ」「そう」など形の似た語は、文脈から判断する必要があります。"
+        }
+      ],
+      "passageIds": [
+        "polite"
+      ],
+      "exerciseIds": [
+        "polite-identification"
+      ]
+    },
+    {
+      "id": "full-analysis",
+      "order": 6,
+      "title": {
+        "en": "6. Full grammatical analysis（品詞分解）",
+        "ja": "6. 品詞分解"
+      },
+      "mode": "modern",
+      "objectives": [
+        {
+          "en": "Combine word, segment, and conjugation analysis.",
+          "ja": "単語、文節、活用の分析を組み合わせる。"
+        },
+        {
+          "en": "Read word details while remembering that suggestions may be imperfect.",
+          "ja": "結果は参考情報であることを踏まえ、単語の詳細を読む。"
+        }
+      ],
+      "explanation": [
+        {
+          "en": "Full analysis identifies every word and its class, conjugation, and segment. Select a word in the passage to see its details.",
+          "ja": "品詞分解では、すべての単語について品詞、活用、文節を確認します。例文の単語を選んで詳細を見てみましょう。"
+        },
+        {
+          "en": "The sentence explorer uses the same display, but its suggestions may be imperfect. Lesson examples and answers are checked separately.",
+          "ja": "文を調べるページでも同じ表示を使いますが、結果は参考情報です。レッスンの例文と答えは個別に確認しています。"
+        }
+      ],
+      "passageIds": [
+        "adjectives"
+      ],
+      "exerciseIds": [],
+      "reviewExerciseIds": [
+        "adjective-identification"
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "kind": "split",
+      "id": "split-bunsetsu",
+      "lessonId": "bunsetsu-basics",
+      "passageId": "split",
+      "title": {
+        "en": "Split into phrase segments",
+        "ja": "文節に分けよう"
+      },
+      "prompt": {
+        "en": "Select every boundary that ends a 文節. Then check your answer.",
+        "ja": "文節の終わりになる境界をすべて選び、答えを確認しましょう。"
+      },
+      "stage": "bunsetsu",
+      "passageIds": [
+        "split",
+        "practice-01",
+        "practice-02",
+        "practice-03",
+        "practice-04",
+        "practice-05",
+        "practice-06",
+        "practice-07",
+        "practice-08",
+        "practice-09",
+        "practice-10",
+        "practice-11",
+        "practice-12"
+      ]
+    },
+    {
+      "kind": "split",
+      "id": "split-tango",
+      "lessonId": "bunsetsu-basics",
+      "passageId": "split",
+      "title": {
+        "en": "Split into words",
+        "ja": "単語に分けよう"
+      },
+      "prompt": {
+        "en": "Now select every boundary that ends a 単語, including each segment’s final boundary.",
+        "ja": "今度は各文節の最後の境界も含め、単語の終わりになる境界をすべて選びましょう。"
+      },
+      "stage": "tango",
+      "passageIds": [
+        "split",
+        "practice-01",
+        "practice-02",
+        "practice-03",
+        "practice-04",
+        "practice-05",
+        "practice-06",
+        "practice-07",
+        "practice-08",
+        "practice-09",
+        "practice-10",
+        "practice-11",
+        "practice-12"
+      ]
+    },
+    {
+      "kind": "components",
+      "id": "basic-components",
+      "lessonId": "sentence-components",
+      "passageId": "basic",
+      "title": {
+        "en": "Find the subject",
+        "ja": "主語を見つけよう"
+      },
+      "prompt": {
+        "en": "Which component is 私は in this sentence?",
+        "ja": "この例文の「私は」はどの文の成分ですか。"
+      },
+      "targetBunsetsuId": "basic-b0",
+      "choices": [
+        "主語",
+        "述語",
+        "修飾語",
+        "接続語",
+        "独立語"
+      ],
+      "answer": "主語",
+      "explanation": {
+        "en": "私は identifies who performs the action described by 読む.",
+        "ja": "「私は」は、「読む」という動作を行う人を示しています。"
+      },
+      "renbunsetsu": {
+        "id": "basic-reading",
+        "bunsetsuIds": [
+          "basic-b1",
+          "basic-b2"
+        ],
+        "explanation": {
+          "en": "本を読む is a combined expression meaning “read a book”; its internal relationship is explained here.",
+          "ja": "「本を読む」は「本を読むこと」という意味を表す結び付いた表現です。内部の関係をここで確認しています。"
+        }
+      }
+    },
+    {
+      "kind": "conjugation",
+      "id": "polite-conjugation",
+      "lessonId": "conjugation-basics",
+      "passageId": "polite",
+      "title": {
+        "en": "Stem, ending, and continuative form",
+        "ja": "語幹、語尾、連用形"
+      },
+      "prompt": {
+        "en": "Inspect the verb 話し before ます.",
+        "ja": "「ます」の前にある動詞「話し」を確認しましょう。"
+      },
+      "targetTangoId": "polite-t3-0",
+      "stem": {
+        "start": 9,
+        "end": 10
+      },
+      "ending": {
+        "start": 10,
+        "end": 11
+      },
+      "katsuyouType": "五段",
+      "katsuyoukei": "連用形",
+      "jflNote": {
+        "en": "話し is the masu stem used in Japanese-language courses; school grammar calls this use 連用形.",
+        "ja": "「話し」は日本語教育でいう「ます形の語幹」、学校文法では連用形です。"
+      }
+    },
+    {
+      "kind": "identification",
+      "id": "adjective-identification",
+      "lessonId": "parts-of-speech",
+      "passageId": "adjectives",
+      "title": {
+        "en": "Prenominal word or adjective?",
+        "ja": "連体詞と形容詞のどちら？"
+      },
+      "prompt": {
+        "en": "Choose the school-grammar class of 大きな.",
+        "ja": "「大きな」の学校文法の品詞を選びましょう。"
+      },
+      "targetTangoId": "adjectives-t0-0",
+      "choices": [
+        "連体詞",
+        "形容詞",
+        "形容動詞",
+        "副詞"
+      ],
+      "answer": "連体詞",
+      "explanation": {
+        "en": "大きな modifies the following noun but does not conjugate like 大きい. It is a 連体詞.",
+        "ja": "「大きな」は後の名詞を修飾しますが、「大きい」のようには活用しません。連体詞です。"
+      }
+    },
+    {
+      "kind": "identification",
+      "id": "polite-identification",
+      "lessonId": "particles-auxiliaries",
+      "passageId": "polite",
+      "title": {
+        "en": "Identify the past-tense helper",
+        "ja": "過去を表す助動詞を見分けよう"
+      },
+      "prompt": {
+        "en": "Choose the class of the final た in 話しました.",
+        "ja": "「話しました」の最後の「た」の品詞を選びましょう。"
+      },
+      "targetTangoId": "polite-t3-2",
+      "choices": [
+        "助動詞",
+        "助詞",
+        "動詞",
+        "名詞"
+      ],
+      "answer": "助動詞",
+      "explanation": {
+        "en": "た adds past-tense meaning and conjugates; it is an auxiliary verb（助動詞）.",
+        "ja": "「た」は過去の意味を添え、活用する助動詞です。"
+      }
+    }
+  ],
+  "decisionTree": {
+    "startId": "start",
+    "nodes": [
+      {
+        "id": "start",
+        "question": {
+          "en": "Is it an independent word（自立語）?",
+          "ja": "自立語ですか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes — it can head a phrase segment",
+              "ja": "はい。文節の中心になれます"
+            },
+            "targetId": "independent"
+          },
+          {
+            "label": {
+              "en": "No — it attaches to another word",
+              "ja": "いいえ。他の語に付きます"
+            },
+            "targetId": "dependent"
+          }
+        ]
+      },
+      {
+        "id": "independent",
+        "question": {
+          "en": "Does it conjugate（活用する）?",
+          "ja": "活用しますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "conjugating"
+          },
+          {
+            "label": {
+              "en": "No",
+              "ja": "いいえ"
+            },
+            "targetId": "nonconjugating"
+          }
+        ]
+      },
+      {
+        "id": "conjugating",
+        "question": {
+          "en": "Does its plain form end in a consonant + u vowel pattern like 読む or 話す?",
+          "ja": "「読む」や「話す」のように、基本形が子音＋う段の音で終わる動詞ですか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes, it is a verb",
+              "ja": "はい、動詞です"
+            },
+            "targetId": "verb"
+          },
+          {
+            "label": {
+              "en": "No, inspect its adjectival ending",
+              "ja": "いいえ。形容詞・形容動詞の語尾を確認します"
+            },
+            "targetId": "adjective-choice"
+          }
+        ]
+      },
+      {
+        "id": "adjective-choice",
+        "question": {
+          "en": "Does its basic form end in い, like 小さい?",
+          "ja": "「小さい」のように、基本形が「い」で終わりますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "adjective"
+          },
+          {
+            "label": {
+              "en": "No, it uses だ・な forms like 静かだ・静かな",
+              "ja": "いいえ。「静かだ・静かな」のように「だ・な」の形を使います"
+            },
+            "targetId": "adjectival-verb"
+          }
+        ]
+      },
+      {
+        "id": "nonconjugating",
+        "question": {
+          "en": "Does it directly modify a following noun, like 大きな or この?",
+          "ja": "「大きな」や「この」のように、後の名詞を直接修飾しますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "prenominal"
+          },
+          {
+            "label": {
+              "en": "No",
+              "ja": "いいえ"
+            },
+            "targetId": "connects"
+          }
+        ]
+      },
+      {
+        "id": "connects",
+        "question": {
+          "en": "Does it connect sentences or clauses, like しかし?",
+          "ja": "「しかし」のように、文や節をつなぎますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "conjunction"
+          },
+          {
+            "label": {
+              "en": "No",
+              "ja": "いいえ"
+            },
+            "targetId": "emotion"
+          }
+        ]
+      },
+      {
+        "id": "emotion",
+        "question": {
+          "en": "Does it express a greeting, address, reply, or emotion, like こんにちは or ああ?",
+          "ja": "「こんにちは」や「ああ」のように、あいさつ、呼びかけ、応答、感動を表しますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "interjection"
+          },
+          {
+            "label": {
+              "en": "No",
+              "ja": "いいえ"
+            },
+            "targetId": "adverb-noun"
+          }
+        ]
+      },
+      {
+        "id": "adverb-noun",
+        "question": {
+          "en": "Does it mainly modify a predicate without conjugating, like とても?",
+          "ja": "「とても」のように、活用せず主に述語を修飾しますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "adverb"
+          },
+          {
+            "label": {
+              "en": "No, it names a person, thing, place, or concept",
+              "ja": "いいえ。人、物、場所、概念の名前です"
+            },
+            "targetId": "noun"
+          }
+        ]
+      },
+      {
+        "id": "dependent",
+        "question": {
+          "en": "Does it conjugate and add grammatical meaning, like ます or た?",
+          "ja": "「ます」や「た」のように、活用して文法的な意味を添えますか。"
+        },
+        "branches": [
+          {
+            "label": {
+              "en": "Yes",
+              "ja": "はい"
+            },
+            "targetId": "auxiliary"
+          },
+          {
+            "label": {
+              "en": "No, it marks a relationship like は, を, or で",
+              "ja": "いいえ。「は」「を」「で」のように関係を示します"
+            },
+            "targetId": "particle"
+          }
+        ]
+      },
+      {
+        "id": "verb",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "動詞"
+      },
+      {
+        "id": "adjective",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "形容詞"
+      },
+      {
+        "id": "adjectival-verb",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "形容動詞"
+      },
+      {
+        "id": "prenominal",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "連体詞"
+      },
+      {
+        "id": "conjunction",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "接続詞"
+      },
+      {
+        "id": "interjection",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "感動詞"
+      },
+      {
+        "id": "adverb",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "副詞"
+      },
+      {
+        "id": "noun",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "名詞"
+      },
+      {
+        "id": "auxiliary",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "助動詞"
+      },
+      {
+        "id": "particle",
+        "question": {
+          "en": "Classification complete",
+          "ja": "分類完了"
+        },
+        "branches": [],
+        "answer": "助詞"
+      }
+    ]
+  }
+}

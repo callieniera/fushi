@@ -1,0 +1,479 @@
+[
+  {
+    "id": "basic",
+    "source": {
+      "title": "Reading a book",
+      "author": "Fushi editorial examples",
+      "source": "Original educational example",
+      "license": "CC0-1.0"
+    },
+    "result": {
+      "mode": "modern",
+      "text": "私は本を読む",
+      "bunsetsu": [
+        {
+          "id": "basic-b0",
+          "tango": [
+            {
+              "id": "basic-t0-0",
+              "surface": "私",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 0,
+              "end": 1
+            },
+            {
+              "id": "basic-t0-1",
+              "surface": "は",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 1,
+              "end": 2,
+              "subHinshi": "係助詞"
+            }
+          ],
+          "start": 0,
+          "end": 2
+        },
+        {
+          "id": "basic-b1",
+          "tango": [
+            {
+              "id": "basic-t1-0",
+              "surface": "本",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 2,
+              "end": 3
+            },
+            {
+              "id": "basic-t1-1",
+              "surface": "を",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 3,
+              "end": 4,
+              "subHinshi": "格助詞"
+            }
+          ],
+          "start": 2,
+          "end": 4
+        },
+        {
+          "id": "basic-b2",
+          "tango": [
+            {
+              "id": "basic-t2-0",
+              "surface": "読む",
+              "hinshi": "動詞",
+              "isIndependent": true,
+              "start": 4,
+              "end": 6,
+              "katsuyouType": "五段",
+              "katsuyoukei": "終止形"
+            }
+          ],
+          "start": 4,
+          "end": 6
+        }
+      ],
+      "diagnostics": []
+    },
+    "title": {
+      "en": "Reading a book",
+      "ja": "本を読む"
+    }
+  },
+  {
+    "id": "polite",
+    "source": {
+      "title": "A conversation in a quiet park",
+      "author": "Fushi editorial examples",
+      "source": "Original educational example",
+      "license": "CC0-1.0"
+    },
+    "result": {
+      "mode": "modern",
+      "text": "静かな公園で友達と話しました",
+      "bunsetsu": [
+        {
+          "id": "polite-b0",
+          "tango": [
+            {
+              "id": "polite-t0-0",
+              "surface": "静かな",
+              "hinshi": "形容動詞",
+              "isIndependent": true,
+              "start": 0,
+              "end": 3,
+              "katsuyouType": "特殊・ダ",
+              "katsuyoukei": "連体形",
+              "baseForm": "静かだ"
+            }
+          ],
+          "start": 0,
+          "end": 3
+        },
+        {
+          "id": "polite-b1",
+          "tango": [
+            {
+              "id": "polite-t1-0",
+              "surface": "公園",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 3,
+              "end": 5
+            },
+            {
+              "id": "polite-t1-1",
+              "surface": "で",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 5,
+              "end": 6,
+              "subHinshi": "格助詞"
+            }
+          ],
+          "start": 3,
+          "end": 6
+        },
+        {
+          "id": "polite-b2",
+          "tango": [
+            {
+              "id": "polite-t2-0",
+              "surface": "友達",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 6,
+              "end": 8
+            },
+            {
+              "id": "polite-t2-1",
+              "surface": "と",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 8,
+              "end": 9,
+              "subHinshi": "格助詞"
+            }
+          ],
+          "start": 6,
+          "end": 9
+        },
+        {
+          "id": "polite-b3",
+          "tango": [
+            {
+              "id": "polite-t3-0",
+              "surface": "話し",
+              "hinshi": "動詞",
+              "isIndependent": true,
+              "start": 9,
+              "end": 11,
+              "katsuyouType": "五段",
+              "katsuyoukei": "連用形",
+              "baseForm": "話す"
+            },
+            {
+              "id": "polite-t3-1",
+              "surface": "まし",
+              "hinshi": "助動詞",
+              "isIndependent": false,
+              "start": 11,
+              "end": 13,
+              "katsuyouType": "特殊・マス",
+              "katsuyoukei": "連用形",
+              "baseForm": "ます"
+            },
+            {
+              "id": "polite-t3-2",
+              "surface": "た",
+              "hinshi": "助動詞",
+              "isIndependent": false,
+              "start": 13,
+              "end": 14,
+              "katsuyouType": "特殊・タ",
+              "katsuyoukei": "終止形",
+              "baseForm": "た"
+            }
+          ],
+          "start": 9,
+          "end": 14
+        }
+      ],
+      "diagnostics": []
+    },
+    "title": {
+      "en": "A conversation in a quiet park",
+      "ja": "静かな公園での会話"
+    }
+  },
+  {
+    "id": "split",
+    "source": {
+      "title": "Children eating sweets",
+      "author": "Fushi editorial examples",
+      "source": "Original educational example",
+      "license": "CC0-1.0"
+    },
+    "result": {
+      "mode": "modern",
+      "text": "子どもたちがお菓子を食べている",
+      "bunsetsu": [
+        {
+          "id": "split-b0",
+          "tango": [
+            {
+              "id": "split-t0-0",
+              "surface": "子どもたち",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 0,
+              "end": 5
+            },
+            {
+              "id": "split-t0-1",
+              "surface": "が",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 5,
+              "end": 6,
+              "subHinshi": "格助詞"
+            }
+          ],
+          "start": 0,
+          "end": 6
+        },
+        {
+          "id": "split-b1",
+          "tango": [
+            {
+              "id": "split-t1-0",
+              "surface": "お菓子",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 6,
+              "end": 9
+            },
+            {
+              "id": "split-t1-1",
+              "surface": "を",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 9,
+              "end": 10,
+              "subHinshi": "格助詞"
+            }
+          ],
+          "start": 6,
+          "end": 10
+        },
+        {
+          "id": "split-b2",
+          "tango": [
+            {
+              "id": "split-t2-0",
+              "surface": "食べ",
+              "hinshi": "動詞",
+              "isIndependent": true,
+              "start": 10,
+              "end": 12,
+              "katsuyouType": "下一段",
+              "katsuyoukei": "連用形",
+              "baseForm": "食べる"
+            },
+            {
+              "id": "split-t2-1",
+              "surface": "て",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 12,
+              "end": 13,
+              "subHinshi": "接続助詞"
+            }
+          ],
+          "start": 10,
+          "end": 13
+        },
+        {
+          "id": "split-b3",
+          "tango": [
+            {
+              "id": "split-t3-0",
+              "surface": "いる",
+              "hinshi": "動詞",
+              "isIndependent": true,
+              "start": 13,
+              "end": 15,
+              "katsuyouType": "上一段",
+              "katsuyoukei": "終止形"
+            }
+          ],
+          "start": 13,
+          "end": 15
+        }
+      ],
+      "diagnostics": []
+    },
+    "title": {
+      "en": "Children eating sweets",
+      "ja": "お菓子を食べる子どもたち"
+    },
+    "splitExplanations": {
+      "bunsetsu": {
+        "en": "子どもたちが｜お菓子を｜食べて｜いる. The supporting verb いる starts its own segment.",
+        "ja": "子どもたちが｜お菓子を｜食べて｜いる。「いる」は自立した動詞なので、新しい文節を始めます。"
+      },
+      "tango": {
+        "en": "子どもたち｜が｜お菓子｜を｜食べ｜て｜いる. Prefix お and suffix たち are already part of their nouns.",
+        "ja": "子どもたち｜が｜お菓子｜を｜食べ｜て｜いる。接頭語の「お」と接尾語の「たち」は名詞の一部です。"
+      }
+    }
+  },
+  {
+    "id": "adjectives",
+    "source": {
+      "title": "A large dog and a small cat",
+      "author": "Fushi editorial examples",
+      "source": "Original educational example",
+      "license": "CC0-1.0"
+    },
+    "result": {
+      "mode": "modern",
+      "text": "大きな犬は小さい猫と遊んでいる",
+      "bunsetsu": [
+        {
+          "id": "adjectives-b0",
+          "tango": [
+            {
+              "id": "adjectives-t0-0",
+              "surface": "大きな",
+              "hinshi": "連体詞",
+              "isIndependent": true,
+              "start": 0,
+              "end": 3
+            }
+          ],
+          "start": 0,
+          "end": 3
+        },
+        {
+          "id": "adjectives-b1",
+          "tango": [
+            {
+              "id": "adjectives-t1-0",
+              "surface": "犬",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 3,
+              "end": 4
+            },
+            {
+              "id": "adjectives-t1-1",
+              "surface": "は",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 4,
+              "end": 5,
+              "subHinshi": "係助詞"
+            }
+          ],
+          "start": 3,
+          "end": 5
+        },
+        {
+          "id": "adjectives-b2",
+          "tango": [
+            {
+              "id": "adjectives-t2-0",
+              "surface": "小さい",
+              "hinshi": "形容詞",
+              "isIndependent": true,
+              "start": 5,
+              "end": 8,
+              "katsuyouType": "形容詞",
+              "katsuyoukei": "連体形"
+            }
+          ],
+          "start": 5,
+          "end": 8
+        },
+        {
+          "id": "adjectives-b3",
+          "tango": [
+            {
+              "id": "adjectives-t3-0",
+              "surface": "猫",
+              "hinshi": "名詞",
+              "isIndependent": true,
+              "start": 8,
+              "end": 9
+            },
+            {
+              "id": "adjectives-t3-1",
+              "surface": "と",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 9,
+              "end": 10,
+              "subHinshi": "格助詞"
+            }
+          ],
+          "start": 8,
+          "end": 10
+        },
+        {
+          "id": "adjectives-b4",
+          "tango": [
+            {
+              "id": "adjectives-t4-0",
+              "surface": "遊ん",
+              "hinshi": "動詞",
+              "isIndependent": true,
+              "start": 10,
+              "end": 12,
+              "katsuyouType": "五段",
+              "katsuyoukei": "連用形",
+              "baseForm": "遊ぶ"
+            },
+            {
+              "id": "adjectives-t4-1",
+              "surface": "で",
+              "hinshi": "助詞",
+              "isIndependent": false,
+              "start": 12,
+              "end": 13,
+              "subHinshi": "接続助詞"
+            }
+          ],
+          "start": 10,
+          "end": 13
+        },
+        {
+          "id": "adjectives-b5",
+          "tango": [
+            {
+              "id": "adjectives-t5-0",
+              "surface": "いる",
+              "hinshi": "動詞",
+              "isIndependent": true,
+              "start": 13,
+              "end": 15,
+              "katsuyouType": "上一段",
+              "katsuyoukei": "終止形"
+            }
+          ],
+          "start": 13,
+          "end": 15
+        }
+      ],
+      "diagnostics": []
+    },
+    "title": {
+      "en": "A large dog and a small cat",
+      "ja": "大きな犬と小さい猫"
+    }
+  }
+]
