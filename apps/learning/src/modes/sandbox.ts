@@ -1,5 +1,7 @@
 import type { ParseResult, Tango } from '@callieniera/fushi/core';
 import { annotatedText, tokenDetails } from '../components/annotated-text.js';
+import { reviewSuggestions } from '../components/review-suggestions.js';
+import { sentenceAnalysis } from '../components/sentence-analysis.js';
 import { button, element } from '../lib/dom.js';
 import { ModernSandbox } from '../lib/fushi-client.js';
 import type { AnnotatedPassage, Curriculum } from '../content/schema.js';
@@ -73,10 +75,13 @@ export function sandboxView(sandbox = new ModernSandbox(), language: Language = 
     };
     output.replaceChildren(
       element('h3', { text: t('annotatedResult') }),
-      annotatedText(result, { showDiagnostics: true, onSelect: select, language }),
+      annotatedText(result, { onSelect: select, language }),
       element('p', { text: t('inspectWord') }),
       details,
+      sentenceAnalysis(result, language),
     );
+    const review = reviewSuggestions(result, language);
+    if (review) output.append(review);
   }
 
   form.addEventListener('submit', (event) => {

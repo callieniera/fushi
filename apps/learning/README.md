@@ -28,6 +28,8 @@ Edit `src/content/curriculum.json` and `src/content/passages/*.json`. `scripts/c
 
 The split lesson and sandbox sample button share 13 eligible passages. Selection avoids an immediate repeat whenever alternatives exist; both split stages retain the selected sentence. Accepted boundaries derive directly from the passage's curated word/phrase spans, and localized split explanations live with each passage. Sentence components, `連文節`, and other exercise answers remain separately curated metadata. Modern sandbox sentence components and dependency labels are best-effort display data, not authoritative answer keys.
 
+The sandbox presents sentence components, resolved phrase relationships, and available clause groups in a dedicated section below the annotated sentence. Unresolved components are explicitly marked `Not determined` / `未確定`; this does not imply ungrammatical input. A separate review panel translates known diagnostic codes into bilingual learner-facing explanations, including a non-error explanation for omitted subjects, while preserving severity and affected source text. Unknown codes use a generic review fallback rather than exposing internal diagnostic messages.
+
 The top-right language button persists its choice in local progress and translates the complete authored app. Theme colors follow the operating system's light/dark preference automatically; no manual theme preference is stored.
 
 The initial educational examples are original and marked CC0-1.0 in their provenance records. Retain source and license fields when replacing them, and do not copy textbook exercises wholesale.

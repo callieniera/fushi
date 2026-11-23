@@ -75,6 +75,8 @@ function isPredicateCandidate(bunsetsu: Bunsetsu): boolean {
   if (!CONJUGATING_HEADS.includes(head.hinshi) && !(head.hinshi === '名詞' && hasCopula(bunsetsu))) {
     return false;
   }
+  if ((head.hinshi === '形容詞' || head.hinshi === '形容動詞')
+    && effectiveConjugationForm(bunsetsu) === '連用形') return false;
   return effectiveConjugationForm(bunsetsu) !== '連体形';
 }
 

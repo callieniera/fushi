@@ -233,7 +233,7 @@ The sandbox loads kuromoji only on demand:
 const { createKuromojiEngine } = await import('@callieniera/fushi/kuromoji');
 ```
 
-The core/kuromoji separation keeps kuromoji out of the initial curated-lesson bundle. Existing consumers can continue using the root `@callieniera/fushi` export and its Classical Japanese APIs.
+The core/kuromoji separation keeps kuromoji out of the initial curated-lesson bundle. The explorer displays best-effort sentence components, resolved phrase relationships, and available clause groups below the annotated sentence. Unresolved labels are marked as not determined, and a separate bilingual review panel explains known diagnostics without treating omitted subjects or other unresolved analysis as grammatical errors. Existing consumers can continue using the root `@callieniera/fushi` export and its Classical Japanese APIs.
 
 Build or develop the app from the repository root:
 

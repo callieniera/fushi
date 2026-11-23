@@ -14,6 +14,30 @@ import {
 } from './fixtures.js';
 
 describe('modern 複文 and 重文 clause analysis', () => {
+  it('treats an adjectival continuative form as a modifier of the main predicate', () => {
+    const result = parseModernMorphemes(morphemes([
+      noun('春'), particle('に', '格助詞'),
+      verb('なる', 'なる', '五段・ラ行', '基本形'), particle('と', '接続助詞'),
+      noun('桜'), particle('の', '連体化'),
+      noun('花'), particle('が', '格助詞'),
+      adjective('美しく', '美しい', '連用テ接続'),
+      verb('咲き', '咲く', '五段・カ行促音便', '連用形'), auxiliary('ます', '特殊・マス'),
+    ]));
+    const [, subordinatePredicate, , , modifier, mainPredicate] = result.bunsetsu;
+
+    expect(modifier).toMatchObject({
+      sentenceComponent: '修飾語',
+      sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: mainPredicate!.id }],
+    });
+    expect(result.clauses?.map((clause) => clause.predicateBunsetsuId)).toEqual([
+      subordinatePredicate!.id,
+      mainPredicate!.id,
+    ]);
+    expect(result.diagnostics.filter(
+      (issue) => issue.code === 'MODERN_COMPONENT_PREDICATE_AMBIGUOUS',
+    )).toEqual([]);
+  });
+
   it('resolves a causal subordinate clause and its main clause independently', () => {
     const result = parseModernMorphemes(morphemes([
       noun('雨'), particle('が', '格助詞'),
