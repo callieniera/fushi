@@ -78,6 +78,38 @@ describe('real kuromoji dictionary integration', () => {
     }
   });
 
+  it('groups real-dictionary subsidiary predicates in a 接続節 and main clause', async () => {
+    const kuromoji = await import('kuromoji');
+    const tokenizer = await new Promise<import('kuromoji').Tokenizer<IpadicFeatures>>((resolve, reject) => {
+      kuromoji.builder({ dicPath: dictionaryRoot }).build((error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      });
+    });
+    const text = '雨が降っているので傘を持って行きましょう';
+    const result = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize(text), text));
+    expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
+      .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう']);
+    expect(result.clauses?.map((clause) => [clause.kind, clause.predicateBunsetsuIds])).toEqual([
+      ['接続節', ['modern-bunsetsu-1', 'modern-bunsetsu-2']],
+      ['主節', ['modern-bunsetsu-4', 'modern-bunsetsu-5']],
+    ]);
+    expect(result.renbunsetsu?.map((group) => [group.relation, group.sentenceComponent])).toEqual([
+      ['補助の関係', '接続語'], ['補助の関係', '述語'],
+    ]);
+    expect(result.sentenceType).toBe('複文');
+    expect(result.bunsetsu[3]?.modifierKind).toBe('連用修飾語');
+    expect(result.diagnostics.map((issue) => issue.code)).toEqual([
+      'MODERN_COMPONENT_SUBJECT_UNRESOLVED',
+    ]);
+    const punctuated = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize(`${text}。`), `${text}。`));
+    expect(punctuated.clauses?.map((clause) => clause.predicateBunsetsuIds)).toEqual([
+      ['modern-bunsetsu-1', 'modern-bunsetsu-2'],
+      ['modern-bunsetsu-4', 'modern-bunsetsu-5'],
+    ]);
+    expect(punctuated.sentenceType).toBe('複文');
+  });
+
   it('ships only JavaScript, declarations, and source maps in dist', async () => {
     const { readdir } = await import('node:fs/promises');
     let entries: string[] = [];

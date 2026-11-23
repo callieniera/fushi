@@ -133,9 +133,11 @@ Fushi can identify **some basic grammatical relationships** between bunsetsu. Fo
 
 > **私は｜本を｜読む**
 
-it can label **私は** as the subject, **本を** as a modifier, and **読む** as the predicate. It can also record that **私は** is the subject of **読む** and that **本を** modifies **読む**. For some sentences, it can recognize adverbial, relative, and coordinate clauses as well.
+it can label **私は** as the subject, **本を** as a modifier, and **読む** as the predicate. It can also record that **私は** is the subject of **読む** and that **本を** modifies **読む**. For some sentences, it can recognize connective, relative, and coordinate clauses as well. These sentence-level results are experimental; the sandbox shows 単語・文節 first and puts sentence analysis in a collapsed section.
 
-However, this is **best-effort analysis, not a complete grammatical tree or a full understanding of the sentence**. Fushi does not guess omitted or shared subjects, unclear modifier targets, or unsupported clause boundaries. Quotation and complement clauses, nested relative clauses, general phrase-segment combination (**連文節**), and unrestricted semantic relationships remain outside its analysis.
+For selected `[動詞＋て／で]＋[補助動詞]` patterns, Fushi can also form a **combined phrase segment（連文節）** with a **subsidiary relation（補助の関係）**. For example, `降って｜いるので` remain two 文節 but together form `降っているので`. In a **connective clause（接続節）**, that expression has an internal predicate but functions as a **connective（接続語）** at sentence level. The grouped representation keeps those levels separate.
+
+However, this is **best-effort analysis, not a complete grammatical tree or a full understanding of the sentence**. Fushi does not guess omitted or shared subjects, unclear modifier targets, or unsupported clause boundaries. Quotation and complement clauses, nested relative clauses, general phrase-segment combination (**連文節**) beyond explicit subsidiary relations, general 主語節・述語節・連用修飾節 recognition, and unrestricted semantic relationships remain outside its analysis.
 
 When Fushi cannot determine a role or relationship confidently, it leaves that information out and records a warning. A missing label or relationship therefore does not prove that none exists.
 

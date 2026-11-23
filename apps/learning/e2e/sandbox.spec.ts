@@ -12,6 +12,10 @@ test('real dictionary loads lazily, annotates modern text, and reuses cache on r
   await page.getByRole('button', { name: 'Explore sentence' }).click();
   await expect(page.getByText(/Your sentence has 3 phrase segments/)).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('[data-tango-id]').filter({ hasText: /^読む$/ })).toHaveCount(1);
+  const experimental = page.locator('.experimental-analysis');
+  await expect(experimental).not.toHaveAttribute('open', '');
+  await expect(page.getByRole('heading', { name: 'Words and phrase segments（単語・文節）' })).toBeVisible();
+  await experimental.locator('summary').click();
   const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
   await expect(analysis.locator('.component-row')).toHaveCount(3);
   await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-0"]')).toContainText('私は');
@@ -48,6 +52,7 @@ test('sentence analysis localizes, explains unresolved subjects, and clears with
   await page.goto('/#/sandbox');
   await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('本を読む');
   await page.getByRole('button', { name: 'Explore sentence' }).click();
+  await page.locator('.experimental-analysis summary').click();
   const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
   await expect(analysis).toBeVisible({ timeout: 30_000 });
   await expect(analysis.locator('[data-component="unresolved"]')).toHaveCount(0);
@@ -59,6 +64,7 @@ test('sentence analysis localizes, explains unresolved subjects, and clears with
   await expect(page.getByRole('region', { name: '文の解析', exact: true })).toHaveCount(0);
   await page.getByLabel('日本語の文（1,000文字まで）').fill('本を読む');
   await page.getByRole('button', { name: '文を調べる', exact: true }).click();
+  await page.locator('.experimental-analysis summary').click();
   const japaneseAnalysis = page.getByRole('region', { name: '文の解析', exact: true });
   await expect(japaneseAnalysis).toBeVisible({ timeout: 30_000 });
   await expect(japaneseAnalysis.locator('[data-bunsetsu-id="modern-bunsetsu-0"]')).toContainText('修飾語');
@@ -72,11 +78,12 @@ test('multi-clause results show clause membership, predicates, and relationships
   await page.goto('/#/sandbox');
   await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('雨が降ったので私は家に帰った');
   await page.getByRole('button', { name: 'Explore sentence' }).click();
+  await page.locator('.experimental-analysis summary').click();
   const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
   await expect(analysis).toBeVisible({ timeout: 30_000 });
   const clauses = analysis.locator('.clause-item');
   await expect(clauses).toHaveCount(2);
-  await expect(clauses.nth(0)).toHaveAttribute('data-clause-kind', '副詞節');
+  await expect(clauses.nth(0)).toHaveAttribute('data-clause-kind', '接続節');
   await expect(clauses.nth(0).locator('.clause-text')).toHaveText('雨が｜降ったので');
   await expect(clauses.nth(0).locator('.clause-predicate')).toContainText('降ったので');
   await expect(clauses.nth(0).locator('.clause-relations')).toContainText('Related main clause');
@@ -92,6 +99,41 @@ test('multi-clause results show clause membership, predicates, and relationships
     expect(widths.content).toBeLessThanOrEqual(widths.viewport);
     await expect(analysis).toBeVisible();
   }
+});
+
+test('subsidiary predicates stay grouped in the optional experimental sentence analysis', async ({ page }) => {
+  await page.goto('/#/sandbox');
+  await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('雨が降っているので傘を持って行きましょう');
+  await page.getByRole('button', { name: 'Explore sentence' }).click();
+  await expect(page.getByText(/Your sentence has 6 phrase segments/)).toBeVisible({ timeout: 30_000 });
+  const experimental = page.locator('.experimental-analysis');
+  await expect(experimental).not.toHaveAttribute('open', '');
+  await expect(page.locator('.annotated-text')).toBeVisible();
+  await experimental.locator('summary').click();
+  const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
+  await expect(analysis.locator('.component-row')).toHaveCount(4);
+  await expect(analysis.locator('.component-row[data-renbunsetsu-id="modern-renbunsetsu-0"]')).toContainText('降っているので');
+  await expect(analysis.locator('.component-row[data-renbunsetsu-id="modern-renbunsetsu-0"]')).toContainText('Connective（接続語）');
+  await expect(analysis.locator('.component-row[data-renbunsetsu-id="modern-renbunsetsu-1"]')).toContainText('持って行きましょう');
+  await expect(analysis.locator('.component-row[data-renbunsetsu-id="modern-renbunsetsu-1"]')).toContainText('Predicate（述語）');
+  await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-3"]')).toContainText('連用修飾語');
+  await expect(analysis.locator('.clause-item')).toHaveCount(2);
+  await expect(analysis.locator('.clause-item').nth(0)).toHaveAttribute('data-clause-kind', '接続節');
+  await expect(analysis.locator('.clause-item').nth(0).locator('.clause-predicate')).toContainText('降っているので');
+  await expect(analysis.locator('.clause-item').nth(1).locator('.clause-predicate')).toContainText('持って行きましょう');
+  await expect(analysis.locator('[data-component="unresolved"]')).toHaveCount(0);
+  await expect(analysis.locator('.sentence-type')).toContainText('複文');
+  await page.getByRole('button', { name: 'Switch to Japanese', exact: true }).click();
+  await page.getByLabel('日本語の文（1,000文字まで）').fill('雨が降っているので傘を持って行きましょう');
+  await page.getByRole('button', { name: '文を調べる', exact: true }).click();
+  await expect(page.locator('.experimental-analysis summary')).toHaveText('試験的な文解析');
+  await page.locator('.experimental-analysis summary').click();
+  const japanese = page.getByRole('region', { name: '文の解析', exact: true });
+  await expect(japanese.locator('.component-row[data-renbunsetsu-id="modern-renbunsetsu-0"]')).toContainText('接続語');
+  await expect(japanese.locator('[data-bunsetsu-id="modern-bunsetsu-3"]')).toContainText('修飾語（連用修飾語）');
+  await expect(japanese.locator('.clause-item').nth(0)).toContainText('接続節');
+  await expect(japanese.locator('.clause-item').nth(0).locator('.clause-predicate')).toContainText('降っているので');
+  await expect(japanese.locator('.clause-item').nth(1).locator('.clause-predicate')).toContainText('持って行きましょう');
 });
 
 test('unresolved components and unknown diagnostics have explicit learner-facing fallbacks', async ({ page }) => {
@@ -116,6 +158,7 @@ test('unresolved components and unknown diagnostics have explicit learner-facing
   await page.goto('/#/sandbox');
   await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('未知');
   await page.getByRole('button', { name: 'Explore sentence' }).click();
+  await page.locator('.experimental-analysis summary').click();
   const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
   await expect(analysis.locator('[data-component="unresolved"]')).toContainText('Not determined');
   await expect(analysis).toContainText('does not mean the phrase is ungrammatical');

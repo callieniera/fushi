@@ -17,6 +17,8 @@ export function parseModernMorphemes(morphemes: RawMorpheme[]): ParseResult {
     text: input.text,
     bunsetsu: analyzed.bunsetsu,
     ...(analyzed.clauses ? { clauses: analyzed.clauses } : {}),
+    ...(analyzed.renbunsetsu ? { renbunsetsu: analyzed.renbunsetsu } : {}),
+    ...(analyzed.sentenceType ? { sentenceType: analyzed.sentenceType } : {}),
     diagnostics: [
       ...input.diagnostics,
       ...normalized.diagnostics,

@@ -78,3 +78,4 @@ export function isClassicalKatsuyouTypeCompatible(hinshi, katsuyouType) {
     }
     return hinshi === '助動詞' && CLASSICAL_KATSUYOU_TYPE.includes(katsuyouType);
 }
+//# sourceMappingURL=schema.js.map

@@ -75,13 +75,24 @@ export function sandboxView(sandbox = new ModernSandbox(), language: Language = 
     };
     output.replaceChildren(
       element('h3', { text: t('annotatedResult') }),
+      element('p', { className: 'analysis-help', text: t('wordBunsetsuHelp') }),
       annotatedText(result, { onSelect: select, language }),
       element('p', { text: t('inspectWord') }),
       details,
+    );
+    const sentenceDiagnostics = result.diagnostics.filter((issue) => issue.code.startsWith('MODERN_COMPONENT_'));
+    const primaryReview = reviewSuggestions(result, language,
+      result.diagnostics.filter((issue) => !issue.code.startsWith('MODERN_COMPONENT_')));
+    if (primaryReview) output.append(primaryReview);
+    const experimental = element('details', { className: 'experimental-analysis' });
+    experimental.append(
+      element('summary', { text: t('experimentalAnalysisTitle') }),
+      element('p', { className: 'analysis-help', text: t('experimentalAnalysisHelp') }),
       sentenceAnalysis(result, language),
     );
-    const review = reviewSuggestions(result, language);
-    if (review) output.append(review);
+    const experimentalReview = reviewSuggestions(result, language, sentenceDiagnostics);
+    if (experimentalReview) experimental.append(experimentalReview);
+    output.append(experimental);
   }
 
   form.addEventListener('submit', (event) => {

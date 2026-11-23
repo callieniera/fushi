@@ -174,12 +174,12 @@ After making phrase segments, Fushi gives each segment a role when it can do so 
 - **Subject (主語):** who or what the predicate talks about.
 - **Predicate (述語):** the main action, event, or description.
 - **Modifier (修飾語):** a segment that adds information to another segment.
-- **Conjunction (接続語):** a word that connects sentences or ideas.
+- **Connective (接続語):** a word that connects sentences or ideas.
 - **Independent word (独立語):** a word such as `はい` that stands apart from the main sentence structure.
 
 Arrows below point to the actual Japanese segment, rather than an internal identification number. These links show basic grammatical relationships (係り受け): for example, which segment is the subject and which segment modifies the predicate.
 
-The modern analysis was checked with 23 focused sentence-component tests together with the existing core suite, which contains 228 tests in total. The kuromoji package has 23 tests, including real-dictionary 複文/重文 checks.
+The modern analysis was checked with 27 focused sentence-component tests together with the core suite, which contains 233 tests in total. The kuromoji package has 24 tests, including real-dictionary 複文/重文 and subsidiary-predicate checks. Sentence-level results are experimental; 単語・文節 remain the primary output.
 
 ### 2.1 Subject, object modifier, and predicate
 
@@ -187,9 +187,9 @@ The modern analysis was checked with 23 focused sentence-component tests togethe
 
 | Phrase segment (文節) | Role | Connection to another segment |
 | --- | --- | --- |
-| `私は` | Subject (主語) | Subject of `読む` (述語の対象) |
+| `私は` | Subject (主語) | Subject of `読む` (主語) |
 | `本を` | Modifier (修飾語) | Modifies `読む` (修飾先) |
-| `読む` | Predicate (述語) | Has subject `私は` (主語); is modified by `本を` (述語の修飾語) |
+| `読む` | Predicate (述語) | Has subject `私は` (主語); is modified by `本を` (修飾語) |
 
 Fushi reported no warnings or other notes.
 
@@ -199,9 +199,9 @@ Fushi reported no warnings or other notes.
 
 | Phrase segment (文節) | Role | Connection to another segment |
 | --- | --- | --- |
-| `子どもが` | Subject (主語) | Subject of `食べた` (述語の対象) |
+| `子どもが` | Subject (主語) | Subject of `食べた` (主語) |
 | `お菓子を` | Modifier (修飾語) | Modifies `食べた` (修飾先) |
-| `食べた` | Predicate (述語) | Has subject `子どもが` (主語); is modified by `お菓子を` (述語の修飾語) |
+| `食べた` | Predicate (述語) | Has subject `子どもが` (主語); is modified by `お菓子を` (修飾語) |
 
 Fushi reported no warnings or other notes.
 
@@ -213,7 +213,7 @@ Fushi reported no warnings or other notes.
 | --- | --- | --- |
 | `私の` | Modifier (修飾語) | Modifies `本を` (修飾先) |
 | `本を` | Modifier (修飾語) | Modifies `読む` (修飾先) |
-| `読む` | Predicate (述語) | Is modified by `本を` (述語の修飾語) |
+| `読む` | Predicate (述語) | Is modified by `本を` (修飾語) |
 
 `私の` describes the following segment `本を`, which in turn adds information to the predicate `読む`. The sentence does not explicitly state a subject. Fushi therefore adds the expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`) instead of inventing one.
 
@@ -226,7 +226,7 @@ Fushi reported no warnings or other notes.
 | `静かな` | Modifier (修飾語) | Modifies `公園で` (修飾先) |
 | `公園で` | Modifier (修飾語) | Modifies `話した` (修飾先) |
 | `友達と` | Modifier (修飾語) | Modifies `話した` (修飾先) |
-| `話した` | Predicate (述語) | Is modified by `公園で` and `友達と` (述語の修飾語) |
+| `話した` | Predicate (述語) | Is modified by `公園で` and `友達と` (修飾語) |
 
 `静かな` describes `公園で`. The segments `公園で` and `友達と` add information to `話した`. The expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`) records that the subject is unstated.
 
@@ -237,7 +237,7 @@ Fushi reported no warnings or other notes.
 | Phrase segment (文節) | Role | Connection to another segment |
 | --- | --- | --- |
 | `とても` | Modifier (修飾語) | Modifies `面白かった` (修飾先) |
-| `面白かった` | Predicate (述語) | Is modified by `とても` (述語の修飾語) |
+| `面白かった` | Predicate (述語) | Is modified by `とても` (修飾語) |
 
 The expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`) records the unstated subject without guessing who or what it is.
 
@@ -249,9 +249,9 @@ The expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`
 | --- | --- | --- |
 | `はい` | Independent word (独立語) | — |
 | `、` | Punctuation only | — |
-| `そして` | Conjunction (接続語) | — |
+| `そして` | Connective (接続語) | — |
 | `本を` | Modifier (修飾語) | Modifies `読む` (修飾先) |
-| `読む` | Predicate (述語) | Is modified by `本を` (述語の修飾語) |
+| `読む` | Predicate (述語) | Is modified by `本を` (修飾語) |
 
 The punctuation-only segment produces the expected “unsupported word type” note (`MODERN_POS_UNSUPPORTED`). The unstated subject also produces `MODERN_COMPONENT_SUBJECT_UNRESOLVED`.
 
@@ -259,14 +259,14 @@ The focused checks also cover `赤いのを選ぶ`, where `の` stands for a thi
 
 These links provide basic grammatical relationships (係り受け), not a complete grammatical tree of the sentence. A noun-modifying link (修飾先) is recorded only on the modifier. Subject and predicate-modifier links are recorded on both connected segments.
 
-### 2.7 A causal subordinate clause (複文・副詞節)
+### 2.7 A causal subordinate clause (複文・接続節)
 
 **Input:** `雨が降ったので、私は家に帰った`
 
 | Phrase segment | Clause | Role | Connection |
 | --- | --- | --- | --- |
-| `雨が` | 副詞節 | Subject | Subject of `降ったので` |
-| `降ったので` | 副詞節 | Predicate | Has subject `雨が` |
+| `雨が` | 接続節 | Subject | Subject of `降ったので` |
+| `降ったので` | 接続節 | Predicate | Has subject `雨が` |
 | `私は` | 主節 | Subject | Subject of `帰った` |
 | `家に` | 主節 | Modifier | Modifies `帰った` |
 | `帰った` | 主節 | Predicate | Has subject `私は`; is modified by `家に` |
@@ -274,6 +274,14 @@ These links provide basic grammatical relationships (係り受け), not a comple
 The subordinate clause links to the main clause with `{ kind: '主節', targetClauseId: 'modern-clause-1' }`. Its two explicit subjects no longer produce a cross-clause ambiguity warning. The punctuation-only segment retains its existing `MODERN_POS_UNSUPPORTED` diagnostic.
 
 A leading main topic is also handled: in `私は雨が降ったので家に帰った`, `私は` belongs to the main clause and `雨が` belongs to the subordinate clause.
+
+### 2.7a Subsidiary predicates and a 接続節 (複文)
+
+**Input:** `雨が降っているので傘を持って行きましょう`
+
+The six 文節 remain `雨が｜降って｜いるので｜傘を｜持って｜行きましょう`. Two `補助の関係` groups form `降っているので` and `持って行きましょう`. At sentence level the first is `接続語` and the second is `述語`. Inside the 接続節, `降っているので` remains the predicate and `雨が` links to its final head `いるので`. `傘を` is `修飾語（連用修飾語）` linked to `行きましょう`.
+
+Both clauses contain ordered `predicateBunsetsuIds`: `降って｜いるので` for the 接続節 and `持って｜行きましょう` for the 主節. The sentence type is `複文`. There is no predicate-ambiguity warning for absorbed subsidiary members; the main clause retains its expected omitted-subject warning. The real-dictionary test confirms that IPAdic supplies `非自立` features for both `いる` and `行き`.
 
 ### 2.8 A relative clause (複文・連体修飾節)
 
@@ -295,15 +303,15 @@ The relative clause links to the main clause with `修飾先`; the bunsetsu `読
 
 `私は本を読んで` and `弟はテレビを見た` are separate `並立節`. `私は` links to `読んで`, and `弟は` links to `見た`. The first clause has `{ kind: '並立', targetClauseId: 'modern-clause-1' }`. Neither clause is marked as subordinate to the other.
 
-Chained structures keep clause membership disjoint. In `雨が降ったので傘を持って出かけた`, `雨が降ったので` is a 副詞節, `傘を持って` is a 並立節, and `出かけた` is the final 並立節. Supplementary predicates such as `読んでいる` are not split into parallel clauses.
+Chained structures keep clause membership disjoint. In `雨が降ったので傘を持って出かけた`, `雨が降ったので` is a 接続節, `傘を持って` is a 並立節, and `出かけた` is the final 並立節. Supplementary predicates such as `読んでいる` are not split into parallel clauses.
 
-For recognized multi-clause input, `ParseResult.clauses` and direct analyzer results provide clause IDs, kinds, ordered bunsetsu membership, predicate IDs, spans, and optional clause relations. Each bunsetsu has one `clauseId`. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; no shared subject is invented.
+For recognized multi-clause input, `ParseResult.clauses` and direct analyzer results provide clause IDs, kinds, ordered bunsetsu membership, final predicate-head IDs, optional full predicate-member IDs, spans, and optional clause relations. Each bunsetsu has one `clauseId`. Supported resolved structures receive `sentenceType: '複文'` or `'重文'`. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; no shared subject is invented.
 
-Nested relative clauses, quotation/complement clauses, general 連文節 construction, and unrestricted semantic dependency parsing are not inferred. If a candidate structure would overlap or omit bunsetsu, Fushi leaves its clause metadata absent and reports `MODERN_COMPONENT_CLAUSE_UNRESOLVED` together with the conservative component diagnostics. Multiple predicates without a supported boundary likewise remain unresolved.
+Nested relative clauses, quotation/complement clauses, general 連文節 construction beyond explicit subsidiary relations, general 主語節・述語節・連用修飾節 recognition, and unrestricted semantic dependency parsing are not inferred. If a candidate structure would overlap or omit bunsetsu, Fushi leaves its clause metadata absent and reports `MODERN_COMPONENT_CLAUSE_UNRESOLVED` together with the conservative component diagnostics. Multiple predicates without a supported boundary likewise remain unresolved.
 
-**Validation:** workspace typecheck passed; 228 core tests and 23 kuromoji-engine tests passed, including real IPAdic examples; workspace build passed.
+**Validation:** 233 core tests, 24 kuromoji-engine tests, 19 learning unit/content tests, and 6 sandbox browser tests passed, including real IPAdic examples; library/app builds passed. The unrelated pre-existing About-page browser expectation for `Fushi on GitHub (not yet public)` still fails.
 
-**Verified test run:** [sentence-components.test.ts](./packages/core/tests/modern/sentence-components.test.ts) — **1 test file passed, 12 tests passed** (Vitest 4.1.12, November 23, 2026).
+**Verified test run:** [sentence-components.test.ts](./packages/core/tests/modern/sentence-components.test.ts) — **1 test file passed, 27 tests passed** (Vitest 4.1.12, November 24, 2026).
 
 ## 3. Conjugation Results (活用)
 

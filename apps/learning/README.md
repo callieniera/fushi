@@ -28,7 +28,7 @@ Edit `src/content/curriculum.json` and `src/content/passages/*.json`. `scripts/c
 
 The split lesson and sandbox sample button share 13 eligible passages. Selection avoids an immediate repeat whenever alternatives exist; both split stages retain the selected sentence. Accepted boundaries derive directly from the passage's curated word/phrase spans, and localized split explanations live with each passage. Sentence components, `連文節`, and other exercise answers remain separately curated metadata. Modern sandbox sentence components and dependency labels are best-effort display data, not authoritative answer keys.
 
-The sandbox presents sentence components, resolved phrase relationships, and available clause groups in a dedicated section below the annotated sentence. Unresolved components are explicitly marked `Not determined` / `未確定`; this does not imply ungrammatical input. A separate review panel translates known diagnostic codes into bilingual learner-facing explanations, including a non-error explanation for omitted subjects, while preserving severity and affected source text. Unknown codes use a generic review fallback rather than exposing internal diagnostic messages.
+The sandbox presents 単語・文節 as its primary result. Sentence components, resolved phrase relationships, explicit subsidiary-verb `連文節`, clause groups, and supported sentence types appear in a collapsed `試験的な文解析` section for selected patterns. Unresolved components are explicitly marked `Not determined` / `未確定`; this does not imply ungrammatical input. Word/文節 diagnostics remain in the primary review area, while sentence-level diagnostics stay with the experimental analysis. Known diagnostic codes have bilingual learner-facing explanations, including a non-error explanation for omitted subjects; unknown codes use a generic fallback rather than exposing internal messages. Curated lesson answers remain independent of this experimental output.
 
 The top-right language button persists its choice in local progress and translates the complete authored app. Theme colors follow the operating system's light/dark preference automatically; no manual theme preference is stored.
 
@@ -63,7 +63,7 @@ npx --yes pnpm@10.28.2 test:app:e2e
 
 `test:browser` retains the Phase 1 package fixture on port 4173. The app E2E suite builds the production app and uses a separate raw-gzip static preview on port 4174; it does not use Vite's development transform pipeline.
 
-The current implementation passes 19 app unit/content tests, 12 app browser tests, and the unchanged core/kuromoji suites. Browser coverage includes Japanese persistence, paired random split stages, no-immediate-repeat samples, automatic light/dark schemes, narrow viewports, and the lazy real-dictionary flow.
+The current implementation passes 19 app unit/content tests and all 6 sandbox browser tests, including bilingual subsidiary-predicate grouping and the collapsed experimental view. The core/kuromoji suites and package browser tests also pass. The full app browser run retains one unrelated pre-existing About-page failure: it expects a `Fushi on GitHub (not yet public)` link that the current About view does not render.
 
 To inspect the production output manually:
 

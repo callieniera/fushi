@@ -196,7 +196,8 @@ function isAttributiveContext(tokens: readonly NormalizedToken[], index: number)
   if (!next) return false;
   const raw = next.source.raw;
   if (raw.pos === '名詞' && raw.posDetail1 !== '接尾') return true;
-  if (raw.pos === '助詞' && (raw.posDetail1 === '連体化' || raw.surface === 'の')) return true;
+  if (raw.pos === '助詞' && (raw.posDetail1 === '連体化'
+    || raw.surface === 'の' || raw.surface === 'ので' || raw.surface === 'のに')) return true;
   return false;
 }
 

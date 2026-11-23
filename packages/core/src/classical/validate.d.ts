@@ -5,3 +5,4 @@ export interface ClassicalValidationResult {
     value?: ParseResult;
 }
 export declare function validateClassicalPassage(input: unknown): ClassicalValidationResult;
+//# sourceMappingURL=validate.d.ts.map

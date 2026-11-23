@@ -6,6 +6,8 @@ import type {
   ModernClause,
   ModernClauseKind,
   ModernClauseRelationKind,
+  ModernRenbunsetsu,
+  ModernSentenceType,
   SentenceRelationKind,
   Tango,
 } from '../types.js';
@@ -14,6 +16,8 @@ export interface SentenceComponentResult {
   bunsetsu: Bunsetsu[];
   diagnostics: Diagnostic[];
   clauses?: ModernClause[];
+  renbunsetsu?: ModernRenbunsetsu[];
+  sentenceType?: ModernSentenceType;
 }
 
 const CONJUGATING_HEADS: readonly Hinshi[] = ['動詞', '形容詞', '形容動詞'];
@@ -85,7 +89,8 @@ function isClausePredicate(bunsetsu: Bunsetsu): boolean {
   if (!head || (!CONJUGATING_HEADS.includes(head.hinshi)
     && !(head.hinshi === '名詞' && hasCopula(bunsetsu)))) return false;
   const particle = conjunctiveParticleOf(bunsetsu);
-  return particle !== undefined || effectiveConjugationForm(bunsetsu) === '連体形';
+  return particle !== undefined || head.subHinshi !== '補助動詞'
+    && effectiveConjugationForm(bunsetsu) === '連体形';
 }
 
 interface ClauseDiscovery {
@@ -109,6 +114,71 @@ interface ClauseDiscoveryResult {
   unresolvedIndex?: number;
 }
 
+interface SubsidiaryRelation {
+  start: number;
+  end: number;
+  predicateIndex: number;
+}
+
+function discoverSubsidiaryRelations(bunsetsu: readonly Bunsetsu[]): SubsidiaryRelation[] {
+  const relations: SubsidiaryRelation[] = [];
+  for (let index = 0; index < bunsetsu.length - 1; index += 1) {
+    if (relations.some((relation) => index >= relation.start && index <= relation.end)) continue;
+    const item = bunsetsu[index]!;
+    const next = bunsetsu[index + 1]!;
+    if (headOf(item)?.hinshi !== '動詞' || headOf(item)?.subHinshi === '補助動詞'
+      || conjunctiveParticleOf(item)?.surface !== 'て' && conjunctiveParticleOf(item)?.surface !== 'で'
+      || headOf(next)?.hinshi !== '動詞' || headOf(next)?.subHinshi !== '補助動詞') continue;
+    const relation = { start: index, end: index + 1, predicateIndex: index + 1 };
+    while (relation.end + 1 < bunsetsu.length) {
+      const current = bunsetsu[relation.end]!;
+      const following = bunsetsu[relation.end + 1]!;
+      const particle = conjunctiveParticleOf(current);
+      if ((particle?.surface !== 'て' && particle?.surface !== 'で')
+        || headOf(following)?.subHinshi !== '補助動詞') break;
+      relation.end += 1;
+      relation.predicateIndex = relation.end;
+    }
+    relations.push(relation);
+    index = relation.end;
+  }
+  return relations;
+}
+
+function subsidiaryMembers(
+  relations: readonly SubsidiaryRelation[],
+  predicateIndex: number,
+): number[] | undefined {
+  const relation = relations.find((candidate) => candidate.predicateIndex === predicateIndex);
+  if (!relation) return undefined;
+  return Array.from({ length: relation.end - relation.start + 1 }, (_, index) => relation.start + index);
+}
+
+function buildRenbunsetsu(
+  bunsetsu: Bunsetsu[],
+  relations: readonly SubsidiaryRelation[],
+  roles: ReadonlyMap<number, ModernRenbunsetsu['sentenceComponent']>,
+): ModernRenbunsetsu[] {
+  const result: ModernRenbunsetsu[] = [];
+  for (const relation of relations) {
+    const sentenceComponent = roles.get(relation.predicateIndex);
+    if (!sentenceComponent) continue;
+    const members = bunsetsu.slice(relation.start, relation.end + 1);
+    const first = members[0]!;
+    const last = members[members.length - 1]!;
+    first.sentenceComponent = sentenceComponent;
+    result.push({
+      id: `modern-renbunsetsu-${result.length}`,
+      relation: '補助の関係',
+      bunsetsuIds: members.map((member) => member.id),
+      sentenceComponent,
+      start: first.start,
+      end: last.end,
+    });
+  }
+  return result;
+}
+
 function hasNominalizingParticle(bunsetsu: Bunsetsu): boolean {
   return bunsetsu.tango.some((tango) => tango.subHinshi === '準体助詞');
 }
@@ -117,11 +187,23 @@ function isRelativeHeadCandidate(bunsetsu: Bunsetsu): boolean {
   return headOf(bunsetsu)?.hinshi === '名詞' && !hasNominalizingParticle(bunsetsu);
 }
 
+function adnominalModifierFloor(bunsetsu: readonly Bunsetsu[], start: number): number {
+  let floor = start;
+  while (floor > 0 && isAdnominalModifier(bunsetsu[floor - 1]!)
+    && hasNominalTarget(bunsetsu[floor])) {
+    floor -= 1;
+  }
+  return floor;
+}
+
 /**
  * Discover only clause boundaries licensed by a following particle or nominal head.
  * Embedded relative clauses mean membership is not a simple span partition.
  */
-function discoverClauses(bunsetsu: readonly Bunsetsu[]): ClauseDiscoveryResult {
+function discoverClauses(
+  bunsetsu: readonly Bunsetsu[],
+  subsidiaryRelations: readonly SubsidiaryRelation[],
+): ClauseDiscoveryResult {
   const discoveries: ClauseDiscovery[] = [];
 
   for (const [predicateIndex, item] of bunsetsu.entries()) {
@@ -138,7 +220,7 @@ function discoverClauses(bunsetsu: readonly Bunsetsu[]): ClauseDiscoveryResult {
       );
       if (sequential && !CONTRASTIVE_CONJUNCTIVE_PARTICLES.has(particle.surface)) continue;
       const parallel = PARALLEL_CONJUNCTIVE_PARTICLES.has(particle.surface);
-      const kind: ModernClauseKind = parallel ? '並立節' : '副詞節';
+      const kind: ModernClauseKind = parallel ? '並立節' : '接続節';
       const relation: ModernClauseRelationKind = parallel ? '並立' : '主節';
       for (let start = 0; start < predicateIndex; start += 1) {
         discoveries.push({ start, end: predicateIndex, predicateIndex, kind, relation });
@@ -173,6 +255,7 @@ function discoverClauses(bunsetsu: readonly Bunsetsu[]): ClauseDiscoveryResult {
     );
     const pool = withSubject.length > 0 ? withSubject : candidates;
     const selected = pool.sort((a, b) => b.start - a.start)[0]!;
+    selected.start = adnominalModifierFloor(bunsetsu, selected.start);
     const outer = candidates.find((candidate) => candidate.start === 0);
     if (selected.start > 0 && outer && hasSubjectMarker(bunsetsu[0]!)
       && bunsetsu.slice(0, predicateIndex + 1).filter(isClausePredicate).length === 1) {
@@ -363,9 +446,10 @@ export function analyzeModernSentenceComponents(
     else if (head?.hinshi === '感動詞') item.sentenceComponent = '独立語';
   }
 
-  const discovery = discoverClauses(bunsetsu);
+  const subsidiaryRelations = discoverSubsidiaryRelations(bunsetsu);
+  const discovery = discoverClauses(bunsetsu, subsidiaryRelations);
   if (discovery.clauses.length > 0) {
-    return analyzeDiscoveredClauses(bunsetsu, discovery.clauses, diagnostics, warning);
+    return analyzeDiscoveredClauses(bunsetsu, discovery.clauses, subsidiaryRelations, diagnostics, warning);
   }
   if (discovery.unresolvedIndex !== undefined) {
     const target = bunsetsu[discovery.unresolvedIndex]!;
@@ -376,8 +460,11 @@ export function analyzeModernSentenceComponents(
     );
   }
 
-  const candidates = bunsetsu.filter(
-    (item) => item.sentenceComponent === undefined && isPredicateCandidate(item),
+  const absorbed = new Set(subsidiaryRelations.flatMap((relation) =>
+    Array.from({ length: relation.end - relation.start }, (_, index) => relation.start + index),
+  ));
+  const candidates = bunsetsu.filter((item, index) =>
+    !absorbed.has(index) && item.sentenceComponent === undefined && isPredicateCandidate(item),
   );
   let predicate: Bunsetsu | undefined;
   if (candidates.length === 1) {
@@ -415,8 +502,8 @@ export function analyzeModernSentenceComponents(
     }
   } else if (predicate && subjects.length === 1) {
     const subject = subjects[0]!;
-    addRelation(subject, '述語の対象', predicate.id);
-    addRelation(predicate, '主語', subject.id);
+    addRelation(subject, '主語', predicate.id);
+    addRelation(predicate, '述語', subject.id);
   } else if (!predicate && subjects.length > 0) {
     for (const item of subjects) {
       warning(
@@ -432,6 +519,7 @@ export function analyzeModernSentenceComponents(
     const target = bunsetsu[index + 1];
     if (target && hasNominalTarget(target)) {
       item.sentenceComponent = '修飾語';
+      item.modifierKind = '連体修飾語';
       addRelation(item, '修飾先', target.id);
     } else {
       warning(
@@ -466,16 +554,27 @@ export function analyzeModernSentenceComponents(
       continue;
     }
     item.sentenceComponent = '修飾語';
+    item.modifierKind = '連用修飾語';
     addRelation(item, '修飾先', resolvedTarget.id);
-    addRelation(resolvedTarget, '述語の修飾語', item.id);
+    addRelation(resolvedTarget, '修飾語', item.id);
   }
 
-  return { bunsetsu, diagnostics };
+  const roles = new Map<number, ModernRenbunsetsu['sentenceComponent']>();
+  if (predicate) roles.set(bunsetsu.indexOf(predicate), '述語');
+  const renbunsetsu = buildRenbunsetsu(bunsetsu, subsidiaryRelations, roles);
+  return {
+    bunsetsu,
+    diagnostics,
+    ...(renbunsetsu.length > 0 ? { renbunsetsu } : {}),
+    ...(predicate && renbunsetsu.length === subsidiaryRelations.length
+      ? { sentenceType: '単文' as const } : {}),
+  };
 }
 
 function analyzeDiscoveredClauses(
   bunsetsu: Bunsetsu[],
   discovered: readonly DiscoveredClause[],
+  subsidiaryRelations: readonly SubsidiaryRelation[],
   diagnostics: Diagnostic[],
   warning: (code: string, message: string, target: Bunsetsu) => void,
 ): SentenceComponentResult {
@@ -485,11 +584,15 @@ function analyzeDiscoveredClauses(
   for (const item of discovered) {
     const predicate = bunsetsu[item.predicateIndex]!;
     const first = bunsetsu[item.bunsetsuIndexes[0] ?? item.predicateIndex]!;
+    const predicateIndexes = subsidiaryMembers(subsidiaryRelations, item.predicateIndex)
+      ?? [item.predicateIndex];
     const clause: ModernClause = {
       id: item.id,
       kind: item.kind,
       bunsetsuIds: item.bunsetsuIndexes.map((index) => bunsetsu[index]!.id),
       predicateBunsetsuId: predicate.id,
+      ...(predicateIndexes.length > 1
+        ? { predicateBunsetsuIds: predicateIndexes.map((index) => bunsetsu[index]!.id) } : {}),
       start: first.start,
       end: predicate.end,
     };
@@ -499,8 +602,9 @@ function analyzeDiscoveredClauses(
     predicate.sentenceComponent = '述語';
 
     const members = item.bunsetsuIndexes.map((index) => bunsetsu[index]!);
-    const candidates = members.filter(
-      (candidate) => candidate.sentenceComponent === undefined && isPredicateCandidate(candidate),
+    const candidates = members.filter((candidate) =>
+      !predicateIndexes.includes(bunsetsu.indexOf(candidate))
+      && candidate.sentenceComponent === undefined && isPredicateCandidate(candidate),
     );
     for (const candidate of candidates) {
       warning(
@@ -521,8 +625,8 @@ function analyzeDiscoveredClauses(
         predicate,
       );
     } else if (subjects.length === 1) {
-      addRelation(subjects[0]!, '述語の対象', predicate.id);
-      addRelation(predicate, '主語', subjects[0]!.id);
+      addRelation(subjects[0]!, '主語', predicate.id);
+      addRelation(predicate, '述語', subjects[0]!.id);
     } else {
       for (const subject of subjects) {
         warning(
@@ -538,6 +642,7 @@ function analyzeDiscoveredClauses(
       const target = bunsetsu[index + 1];
       if (target && target.clauseId === candidate.clauseId && hasNominalTarget(target)) {
         candidate.sentenceComponent = '修飾語';
+        candidate.modifierKind = '連体修飾語';
         addRelation(candidate, '修飾先', target.id);
       } else {
         warning(
@@ -565,8 +670,9 @@ function analyzeDiscoveredClauses(
         continue;
       }
       candidate.sentenceComponent = '修飾語';
+      candidate.modifierKind = '連用修飾語';
       addRelation(candidate, '修飾先', target.id);
-      addRelation(target, '述語の修飾語', candidate.id);
+      addRelation(target, '修飾語', candidate.id);
     }
   }
 
@@ -593,5 +699,28 @@ function analyzeDiscoveredClauses(
     clause.relations?.some((relation) => !clauseIds.has(relation.targetClauseId)),
   )) throw new Error('Internal error: unresolved modern clause relation target.');
 
-  return { bunsetsu, diagnostics, clauses };
+  const roles = new Map<number, ModernRenbunsetsu['sentenceComponent']>();
+  for (const item of discovered) {
+    if (!subsidiaryMembers(subsidiaryRelations, item.predicateIndex)) continue;
+    if (item.kind === '接続節') {
+      roles.set(item.predicateIndex, '接続語');
+      for (const member of item.bunsetsuIndexes) {
+        if (bunsetsu[member]!.sentenceComponent === undefined) {
+          bunsetsu[member]!.sentenceComponent = '接続語';
+        }
+      }
+    } else {
+      roles.set(item.predicateIndex, '述語');
+    }
+  }
+  const renbunsetsu = buildRenbunsetsu(bunsetsu, subsidiaryRelations, roles);
+  const sentenceType: ModernSentenceType | undefined = discovered.some((item) => item.kind === '並立節')
+    ? '重文' : '複文';
+  return {
+    bunsetsu,
+    diagnostics,
+    clauses,
+    ...(renbunsetsu.length > 0 ? { renbunsetsu } : {}),
+    sentenceType,
+  };
 }

@@ -8,3 +8,4 @@ export declare const ADJECTIVE_KATSUYOU_TYPES: readonly ClassicalKatsuyouType[];
 export declare const ADJECTIVAL_VERB_KATSUYOU_TYPES: readonly ClassicalKatsuyouType[];
 export declare const INDEPENDENT_HINSHI: readonly Hinshi[];
 export declare function isClassicalKatsuyouTypeCompatible(hinshi: Hinshi, katsuyouType: ClassicalKatsuyouType): boolean;
+//# sourceMappingURL=schema.d.ts.map

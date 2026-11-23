@@ -4,6 +4,7 @@ import type {
   ModernClauseKind,
   ModernClauseRelationKind,
   ModernSentenceComponent,
+  ModernSentenceType,
   ParseResult,
   SentenceRelationKind,
 } from '@callieniera/fushi/core';
@@ -19,15 +20,21 @@ const componentLabels: Record<ModernSentenceComponent, MessageKey> = {
 };
 
 const relationLabels: Record<SentenceRelationKind, MessageKey> = {
-  述語の対象: 'relationPredicate',
-  修飾先: 'relationModifies',
-  述語の修飾語: 'relationModifiedBy',
   主語: 'relationSubject',
+  修飾先: 'relationModifies',
+  修飾語: 'relationModifiedBy',
+  述語: 'relationPredicate',
+};
+
+const sentenceTypeLabels: Record<ModernSentenceType, MessageKey> = {
+  単文: 'sentenceTypeSimple',
+  重文: 'sentenceTypeCompound',
+  複文: 'sentenceTypeComplex',
 };
 
 const clauseLabels: Record<ModernClauseKind, MessageKey> = {
   主節: 'clauseMain',
-  副詞節: 'clauseAdverbial',
+  接続節: 'clauseAdverbial',
   連体修飾節: 'clauseRelative',
   並立節: 'clauseCoordinate',
 };
@@ -53,19 +60,33 @@ export function sentenceAnalysis(result: ParseResult, language: Language = 'en')
   );
   const componentList = element('dl', { className: 'component-list' });
   let unresolved = false;
+  const grouped = new Set(result.renbunsetsu?.flatMap((group) => group.bunsetsuIds.slice(1)));
   for (const bunsetsu of result.bunsetsu) {
+    if (grouped.has(bunsetsu.id)) continue;
+    const group = result.renbunsetsu?.find((candidate) => candidate.bunsetsuIds[0] === bunsetsu.id);
     const row = element('div', {
       className: 'component-row',
-      attributes: { 'data-bunsetsu-id': bunsetsu.id },
+      attributes: {
+        'data-bunsetsu-id': bunsetsu.id,
+        ...(group ? { 'data-renbunsetsu-id': group.id } : {}),
+      },
     });
-    const component = bunsetsu.sentenceComponent;
+    const component = group?.sentenceComponent ?? bunsetsu.sentenceComponent;
     unresolved ||= component === undefined;
     row.dataset.component = component ?? 'unresolved';
+    const textContent = group
+      ? group.bunsetsuIds.map((id) => result.bunsetsu.find((item) => item.id === id))
+        .filter((item): item is Bunsetsu => item !== undefined)
+        .map((item) => phraseText(result, item)).join('')
+      : phraseText(result, bunsetsu);
+    const modifier = bunsetsu.modifierKind
+      ? `（${t(bunsetsu.modifierKind === '連体修飾語' ? 'modifierAdnominal' : 'modifierAdverbial')}）`
+      : '';
     row.append(
-      element('dt', { text: phraseText(result, bunsetsu), attributes: { lang: 'ja' } }),
+      element('dt', { text: textContent, attributes: { lang: 'ja' } }),
       element('dd', {
         className: component ? 'component-label' : 'component-label unresolved',
-        text: component ? t(componentLabels[component]) : t('componentUnresolved'),
+        text: component ? `${t(componentLabels[component])}${modifier}` : t('componentUnresolved'),
       }),
     );
     componentList.append(row);
@@ -73,6 +94,15 @@ export function sentenceAnalysis(result: ParseResult, language: Language = 'en')
   components.append(componentList);
   if (unresolved) components.append(element('p', { className: 'analysis-note', text: t('componentUnresolvedNote') }));
   section.append(components);
+  if (result.sentenceType) {
+    section.append(element('p', {
+      className: 'sentence-type',
+      text: `${t('sentenceType')}: ${t(sentenceTypeLabels[result.sentenceType])}`,
+    }));
+  }
+  if (result.renbunsetsu && result.renbunsetsu.length > 0) {
+    section.append(renbunsetsuAnalysis(result, language));
+  }
 
   const relationships = element('section', { attributes: { 'aria-labelledby': 'sentence-relations-title' } });
   relationships.append(
@@ -111,6 +141,26 @@ export function sentenceAnalysis(result: ParseResult, language: Language = 'en')
   return section;
 }
 
+function renbunsetsuAnalysis(result: ParseResult, language: Language): HTMLElement {
+  const section = element('section');
+  section.append(element('h4', { text: text(language, 'renbunsetsuTitle') }));
+  const list = element('ul', { className: 'renbunsetsu-list' });
+  for (const group of result.renbunsetsu ?? []) {
+    const members = group.bunsetsuIds.flatMap((id) => {
+      const bunsetsu = result.bunsetsu.find((candidate) => candidate.id === id);
+      return bunsetsu ? [phraseText(result, bunsetsu)] : [];
+    });
+    const item = element('li', { attributes: { 'data-renbunsetsu-id': group.id } });
+    item.append(
+      element('span', { text: members.join('＋'), attributes: { lang: 'ja' } }),
+      element('span', { text: ` — ${text(language, 'renbunsetsuSubsidiary')}` }),
+    );
+    list.append(item);
+  }
+  section.append(list);
+  return section;
+}
+
 function clauseAnalysis(result: ParseResult, language: Language): HTMLElement {
   const t = (key: MessageKey): string => text(language, key);
   const section = element('section', {
@@ -127,7 +177,10 @@ function clauseAnalysis(result: ParseResult, language: Language): HTMLElement {
       const bunsetsu = result.bunsetsu.find((candidate) => candidate.id === id);
       return bunsetsu ? [bunsetsu] : [];
     });
-    const predicate = result.bunsetsu.find((candidate) => candidate.id === clause.predicateBunsetsuId);
+    const predicates = (clause.predicateBunsetsuIds ?? [clause.predicateBunsetsuId]).flatMap((id) => {
+      const bunsetsu = result.bunsetsu.find((candidate) => candidate.id === id);
+      return bunsetsu ? [bunsetsu] : [];
+    });
     const item = element('li', {
       className: 'clause-item',
       attributes: { 'data-clause-id': clause.id, 'data-clause-kind': clause.kind },
@@ -140,11 +193,11 @@ function clauseAnalysis(result: ParseResult, language: Language): HTMLElement {
         attributes: { lang: 'ja' },
       }),
     );
-    if (predicate) {
+    if (predicates.length > 0) {
       const predicateLine = element('p', { className: 'clause-predicate' });
       predicateLine.append(
         element('span', { text: `${t('clausePredicate')}: ` }),
-        element('span', { text: phraseText(result, predicate), attributes: { lang: 'ja' } }),
+        element('span', { text: predicates.map((predicate) => phraseText(result, predicate)).join(''), attributes: { lang: 'ja' } }),
       );
       item.append(predicateLine);
     }

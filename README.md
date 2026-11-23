@@ -11,10 +11,11 @@ English grammar terms below are paired with their Japanese equivalents. Code ide
 - **Morpheme（形態素）**: The smallest meaningful unit found by a morphological analyzer. For example, `私は本を読む` is split into `私`, `は`, `本`, `を`, and `読む`.
 - **Word（単語, `Tango`）**: A school-grammar word produced by Fushi. It can combine several morphemes when they function as one grammatical unit.
 - **Phrase segment（文節, `Bunsetsu`）**: A natural sentence chunk consisting of a **main word（自立語）**, such as a noun or verb, and any **supporting words（付属語）**, such as particles or auxiliary verbs, that follow it. For example, `私は本を読む` becomes `私は｜本を｜読む`.
-- **Sentence component（文の成分）**: The grammatical role of a phrase segment. A **subject（主語）** identifies who or what is being described; a **predicate（述語）** describes an action, state, or property; a **modifier（修飾語）** adds detail to another word or phrase; a **conjunction（接続語）** links sentences or ideas; and an **independent component（独立語）**, such as a greeting or address, stands apart from the other components.
+- **Sentence component（文の成分）**: The grammatical role of a phrase segment or combined phrase segment. A **subject（主語）** identifies who or what is being described; a **predicate（述語）** describes an action, state, or property; a **modifier（修飾語）** adds detail to another expression; a **connective（接続語）** links preceding context to following context; and an **independent component（独立語）**, such as a greeting or address, stands apart from the other components. Modifiers can be further described as **adnominal modifiers（連体修飾語）** or **predicate modifiers（連用修飾語）**. School grammar does not add a separate object（目的語） constituent for `〜を`.
 - **Dependency（係り受け）**: A grammatical relationship in which one word or phrase segment modifies or relates to another.
+- **Combined phrase segment（連文節）**: Adjacent phrase segments functioning as one constituent. Fushi experimentally recognizes the **subsidiary relation（補助の関係）** in `[verb + て/で] + [subsidiary verb（補助動詞）]`, such as `降って＋いるので` and `持って＋行きましょう`.
 - **Clause（節）**: A part of a sentence with its own subject-predicate structure. A **complex sentence（複文）** contains a **main clause（主節）** and a subordinate clause, while a **compound sentence（重文）** joins clauses of equal grammatical status.
-- **Adverbial clause（副詞節）**: A subordinate clause that modifies the main predicate. A **relative clause（連体修飾節）** instead modifies a following noun. A **coordinate clause（並立節）** is joined to another clause in parallel.
+- **Connective clause（接続節）**: A clause ending in a conjunctive particle and connecting to a following clause. A **relative clause（連体修飾節）** instead modifies a following noun. A **coordinate clause（並立節）** is joined to another clause in parallel. The broader school-grammar taxonomy also includes **subject clauses（主語節）**, **predicate clauses（述語節）**, and **adverbial modifier clauses（連用修飾節）**, but Fushi does not claim general recognition of those types.
 - **Conjugation（活用）**: A change in a word's form that expresses its grammatical function. The **continuative form（連用形）** connects to a following word, as `読み` does in `読みます`; the **attributive form（連体形）** can modify a noun, as `読む` does in `読む本`; and the **realis form（已然形）** is a Classical Japanese form used before particles such as `ば` and required after the binding particle `こそ`.
 - **Kakari-musubi（係り結び）**: A Classical Japanese agreement rule in which a binding particle, such as `ぞ` or `こそ`, determines the conjugated form of the predicate.
 - **Classical conjugation patterns（古典の活用型）**: The supported adjective patterns are **ku conjugation（ク活用）** and **shiku conjugation（シク活用）**. The supported adjectival-noun patterns are **nari conjugation（ナリ活用）** and **tari conjugation（タリ活用）**. These names distinguish the different sets of word endings.
@@ -43,8 +44,9 @@ Fushi adds functionality beyond kuromoji.js:
 
 - Token merging and school-grammar **conjugation（活用）** remapping.
 - **Phrase segment（文節）** construction.
-- Best-effort modern **sentence component（文の成分）** labels—**subject（主語）**, **predicate（述語）**, **modifier（修飾語）**, **conjunction（接続語）**, and **independent component（独立語）**—plus basic **dependency（係り受け）** relationship IDs.
-- Conservative discovery of **complex sentences（複文）**, containing **adverbial clauses（副詞節）** or **relative clauses（連体修飾節）**, and **compound sentences（重文）**, containing **coordinate clauses（並立節）**, with clause-scoped component links.
+- Experimental modern **sentence component（文の成分）** labels—**subject（主語）**, **predicate（述語）**, **modifier（修飾語）**, **connective（接続語）**, and **independent component（独立語）**—plus basic **dependency（係り受け）** relationship IDs.
+- Conservative discovery of **complex sentences（複文）**, containing **connective clauses（接続節）** or **relative clauses（連体修飾節）**, and **compound sentences（重文）**, containing **coordinate clauses（並立節）**, with clause-scoped component links.
+- Experimental **combined phrase segments（連文節）** for explicit subsidiary-verb relations, predicate-member IDs, modifier detail, and supported **sentence types（単文・重文・複文）**.
 - Preservation of original **morphemes（形態素）** and source offsets.
 - Best-effort handling with structured warnings for unsupported mappings.
 - Classical Japanese schema, **conjugation（活用）**, source-span, and **kakari-musubi（係り結び）** validation.
@@ -159,14 +161,14 @@ For a full sentence such as `私は本を読む`, `私は` is the **subject（�
 
 ```typescript
 // 私は → 読む
-{ kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-2' }
+{ kind: '主語', targetBunsetsuId: 'modern-bunsetsu-2' }
 
 // 本を → 読む
 { kind: '修飾先', targetBunsetsuId: 'modern-bunsetsu-2' }
 
 // 読む → 私は and 本を
-{ kind: '主語', targetBunsetsuId: 'modern-bunsetsu-0' }
-{ kind: '述語の修飾語', targetBunsetsuId: 'modern-bunsetsu-1' }
+{ kind: '述語', targetBunsetsuId: 'modern-bunsetsu-0' }
+{ kind: '修飾語', targetBunsetsuId: 'modern-bunsetsu-1' }
 ```
 
 These are basic **dependency（係り受け）** links, not full dependency parsing. kuromoji/IPAdic does not provide dependencies between **phrase segments（文節）**. Explicit `が`/`は` subjects, local noun modifiers, and clear predicate modifiers are handled conservatively. Omitted subjects, unclear clause boundaries, and ambiguous modifier targets are not guessed: the corresponding label or relationship is absent and a structured warning is added to `diagnostics`. Applications must not treat the absence of a label as a negative grammatical assertion.
@@ -175,11 +177,11 @@ These are basic **dependency（係り受け）** links, not full dependency pars
 
 For supported multi-clause structures, `ParseResult.clauses` and `SentenceComponentResult.clauses` contain `ModernClause[]`. Single-clause results do not add `clauses` or `clauseId` fields. The analyzer recognizes:
 
-- **Adverbial clauses（副詞節）**, which modify a main predicate and end in **conjunctive particles（接続助詞）**—words that link clauses—such as `ので`, `から`, `のに`, and `ながら`.
+- **Connective clauses（接続節）**, which connect to a following clause and end in **conjunctive particles（接続助詞）** such as `ので`, `から`, `のに`, and `ながら`.
 - **Relative clauses（連体修飾節）**, which modify a following noun and end in a predicate in the **attributive form（連体形）** before an explicit noun called the head.
 - **Coordinate clauses（並立節）**, which are joined in parallel and end in forms such as `て`/`で`, `が`, `けれど`, and `けれども`, excluding helper predicates such as `読んでいる`.
 
-Each **clause（節）** has a deterministic `id`, `kind`, ordered `bunsetsuIds`, `predicateBunsetsuId`, and source `start`/`end`. Its optional `relations` point from the dependent/earlier clause to a governing/later clause using the literal values `主節`, `修飾先`, or `並立`. These respectively identify the **main clause（主節）**, the **modification target（修飾先）**, and a **parallel relationship（並立）**. A relative-clause predicate also receives the existing phrase-segment-level **modification target（修飾先）** relation to the noun it modifies.
+Each **clause（節）** has a deterministic `id`, `kind`, ordered `bunsetsuIds`, final predicate-head `predicateBunsetsuId`, and source `start`/`end`. A multi-文節 predicate additionally has ordered `predicateBunsetsuIds`. Optional `relations` point from the dependent/earlier clause to a governing/later clause using the literal values `主節`, `修飾先`, or `並立`. A relative-clause predicate also receives the phrase-segment-level **modification target（修飾先）** relation to the noun it modifies.
 
 `Bunsetsu.clauseId` associates each **phrase segment（文節）** with exactly one discovered **clause（節）**. Clause membership is ordered by source position and need not be contiguous: in `私は子どもが読んだ本を買った`, `私は`, `本を`, and `買った` belong to the **main clause（主節）**, while `子どもが` and `読んだ` belong to the **relative clause（連体修飾節）**. The relative clause's `start`/`end` cover only the relative clause itself.
 
@@ -187,7 +189,7 @@ Each **clause（節）** has a deterministic `id`, `kind`, ordered `bunsetsuIds`
 // 雨が降ったので、私は家に帰った (punctuation bunsetsu omitted for brevity)
 {
   id: 'modern-clause-0',
-  kind: '副詞節',
+  kind: '接続節',
   bunsetsuIds: ['modern-bunsetsu-0', 'modern-bunsetsu-1'],
   predicateBunsetsuId: 'modern-bunsetsu-1',
   start: 0,
@@ -196,7 +198,24 @@ Each **clause（節）** has a deterministic `id`, `kind`, ordered `bunsetsuIds`
 }
 ```
 
-Subjects and predicate modifiers are resolved within their clause, so `雨が → 降ったので` and `私は → 帰った` do not compete for the same predicate. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; shared subjects are not inferred. Unsupported nested relative structures and incomplete or overlapping clause assignments fall back to conservative unresolved analysis with `MODERN_COMPONENT_CLAUSE_UNRESOLVED`. Quotation/complement clauses, general **phrase-segment combination（連文節）** construction, and unrestricted semantic dependency parsing remain outside this heuristic.
+Subjects and predicate modifiers are resolved within their clause, so `雨が → 降ったので` and `私は → 帰った` do not compete for the same predicate. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; shared subjects are not inferred. Unsupported nested relative structures and incomplete or overlapping clause assignments fall back to conservative unresolved analysis with `MODERN_COMPONENT_CLAUSE_UNRESOLVED`. Sentence types are emitted only for resolved supported structures.
+
+### Experimental subsidiary-verb 連文節
+
+For `雨が降っているので傘を持って行きましょう`, real IPAdic marks `いる` and `行き` as non-independent dictionary verbs. Fushi maps them to independent school-grammar **subsidiary verbs（補助動詞）**, retaining six 文節:
+
+```text
+雨が｜降って｜いるので｜傘を｜持って｜行きましょう
+```
+
+It then recognizes two `補助の関係` groups in `ParseResult.renbunsetsu`:
+
+- `降って＋いるので` → `降っているので`, `接続語` at sentence level. Its containing `接続節` has `predicateBunsetsuIds: ['modern-bunsetsu-1', 'modern-bunsetsu-2']` and final head `modern-bunsetsu-2`; the clause-internal predicate remains `述語`.
+- `持って＋行きましょう` → `持って行きましょう`, the main-clause `述語`, with predicate members `modern-bunsetsu-4` and `modern-bunsetsu-5`.
+
+`傘を` is `修飾語` with `modifierKind: '連用修飾語'`, linked to the final predicate head. The resolved sentence receives `sentenceType: '複文'`; the main clause still receives an omitted-subject diagnostic. `ModernRenbunsetsu` includes deterministic IDs, ordered member IDs, the relation, sentence-level component, and source span.
+
+Only contiguous `[動詞＋て／で]＋[補助動詞]` relations are recognized. Quotation/complement clauses, general 連文節 construction, general 主語節・述語節・連用修飾節 detection, and unrestricted semantic dependency parsing remain unsupported. Lexical versus subsidiary meaning and non-local modifier targets can remain ambiguous. The browser sandbox therefore presents 文節・単語 first and places this sentence-level analysis in a collapsed experimental section.
 
 Each normalized **word（単語, `Tango`）** retains its source `rawMorphemes`, and all tokens and **phrase segments（文節）** retain source offsets. `analyzeModernSentenceComponents` is also exported for applications that already have modern `Bunsetsu[]`; it does not mutate its input or existing relation arrays.
 

@@ -362,3 +362,4 @@ export function validateClassicalPassage(input) {
         value: { mode: 'classical', text, bunsetsu, diagnostics: [] },
     };
 }
+//# sourceMappingURL=validate.js.map

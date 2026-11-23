@@ -14,6 +14,54 @@ import {
 } from './fixtures.js';
 
 describe('modern 複文 and 重文 clause analysis', () => {
+  it('groups subsidiary predicates and maps a 接続節 separately from its internal predicate', () => {
+    const result = parseModernMorphemes(morphemes([
+      noun('雨'), particle('が', '格助詞'),
+      verb('降っ', '降る', '五段・ラ行', '連用タ接続'), particle('て', '接続助詞'),
+      verb('いる', 'いる', '一段', '基本形', '非自立'), particle('ので', '接続助詞'),
+      noun('傘'), particle('を', '格助詞'),
+      verb('持っ', '持つ', '五段・タ行', '連用タ接続'), particle('て', '接続助詞'),
+      verb('行き', '行く', '五段・カ行促音便', '連用形', '非自立'),
+      auxiliary('ましょ', '特殊・マス', '未然ウ接続', 'ます'), auxiliary('う', '不変化型', '基本形', 'う'),
+    ]));
+    expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
+      .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう']);
+    expect(result.clauses).toEqual([
+      expect.objectContaining({
+        kind: '接続節', predicateBunsetsuId: 'modern-bunsetsu-2',
+        predicateBunsetsuIds: ['modern-bunsetsu-1', 'modern-bunsetsu-2'],
+      }),
+      expect.objectContaining({
+        kind: '主節', predicateBunsetsuId: 'modern-bunsetsu-5',
+        predicateBunsetsuIds: ['modern-bunsetsu-4', 'modern-bunsetsu-5'],
+      }),
+    ]);
+    expect(result.renbunsetsu).toEqual([
+      expect.objectContaining({
+        relation: '補助の関係', bunsetsuIds: ['modern-bunsetsu-1', 'modern-bunsetsu-2'],
+        sentenceComponent: '接続語', start: 2, end: 9,
+      }),
+      expect.objectContaining({
+        relation: '補助の関係', bunsetsuIds: ['modern-bunsetsu-4', 'modern-bunsetsu-5'],
+        sentenceComponent: '述語', start: 11, end: 20,
+      }),
+    ]);
+    expect(result.sentenceType).toBe('複文');
+    expect(result.bunsetsu[0]?.sentenceRelations).toEqual([
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-2' },
+    ]);
+    expect(result.bunsetsu[3]).toMatchObject({
+      sentenceComponent: '修飾語', modifierKind: '連用修飾語',
+      sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: 'modern-bunsetsu-5' }],
+    });
+    expect(result.diagnostics.map((issue) => issue.code)).toEqual([
+      'MODERN_COMPONENT_SUBJECT_UNRESOLVED',
+    ]);
+    expect(result.diagnostics.some(
+      (issue) => issue.code === 'MODERN_COMPONENT_PREDICATE_AMBIGUOUS',
+    )).toBe(false);
+  });
+
   it('treats an adjectival continuative form as a modifier of the main predicate', () => {
     const result = parseModernMorphemes(morphemes([
       noun('春'), particle('に', '格助詞'),
@@ -26,7 +74,7 @@ describe('modern 複文 and 重文 clause analysis', () => {
     const [, subordinatePredicate, , , modifier, mainPredicate] = result.bunsetsu;
 
     expect(modifier).toMatchObject({
-      sentenceComponent: '修飾語',
+      sentenceComponent: '修飾語', modifierKind: '連用修飾語',
       sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: mainPredicate!.id }],
     });
     expect(result.clauses?.map((clause) => clause.predicateBunsetsuId)).toEqual([
@@ -51,16 +99,16 @@ describe('modern 複文 and 重文 clause analysis', () => {
     const [subordinateSubject, subordinatePredicate, , mainSubject, location, mainPredicate] = result.bunsetsu;
     expect(subordinateSubject).toMatchObject({
       clauseId: 'modern-clause-0', sentenceComponent: '主語',
-      sentenceRelations: [{ kind: '述語の対象', targetBunsetsuId: subordinatePredicate!.id }],
+      sentenceRelations: [{ kind: '主語', targetBunsetsuId: subordinatePredicate!.id }],
     });
     expect(mainSubject).toMatchObject({
       clauseId: 'modern-clause-1', sentenceComponent: '主語',
-      sentenceRelations: [{ kind: '述語の対象', targetBunsetsuId: mainPredicate!.id }],
+      sentenceRelations: [{ kind: '主語', targetBunsetsuId: mainPredicate!.id }],
     });
     expect(location?.sentenceRelations).toEqual([{ kind: '修飾先', targetBunsetsuId: mainPredicate!.id }]);
     expect(result.clauses).toEqual([
       expect.objectContaining({
-        id: 'modern-clause-0', kind: '副詞節', predicateBunsetsuId: subordinatePredicate!.id,
+        id: 'modern-clause-0', kind: '接続節', predicateBunsetsuId: subordinatePredicate!.id,
         bunsetsuIds: [subordinateSubject!.id, subordinatePredicate!.id],
         relations: [{ kind: '主節', targetClauseId: 'modern-clause-1' }],
       }),
@@ -86,10 +134,10 @@ describe('modern 複文 and 重文 clause analysis', () => {
       ['modern-bunsetsu-0', 'modern-bunsetsu-3', 'modern-bunsetsu-4'],
     ]);
     expect(result.bunsetsu[0]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-4' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-4' },
     ]);
     expect(result.bunsetsu[1]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-2' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-2' },
     ]);
   });
 
@@ -103,12 +151,12 @@ describe('modern 複文 and 重文 clause analysis', () => {
     ]));
     const [relativeSubject, relativePredicate, object, mainSubject, mainPredicate] = result.bunsetsu;
     expect(relativeSubject?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: relativePredicate!.id },
+      { kind: '主語', targetBunsetsuId: relativePredicate!.id },
     ]);
     expect(relativePredicate).toMatchObject({
       clauseId: 'modern-clause-0', sentenceComponent: '述語',
       sentenceRelations: [
-        { kind: '主語', targetBunsetsuId: relativeSubject!.id },
+        { kind: '述語', targetBunsetsuId: relativeSubject!.id },
         { kind: '修飾先', targetBunsetsuId: object!.id },
       ],
     });
@@ -117,7 +165,7 @@ describe('modern 複文 and 重文 clause analysis', () => {
       sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: mainPredicate!.id }],
     });
     expect(mainSubject?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: mainPredicate!.id },
+      { kind: '主語', targetBunsetsuId: mainPredicate!.id },
     ]);
     expect(result.clauses).toEqual([
       expect.objectContaining({
@@ -131,6 +179,29 @@ describe('modern 複文 and 重文 clause analysis', () => {
       }),
     ]);
     expect(result.diagnostics).toEqual([]);
+  });
+
+  it('keeps an adnominal modifier with its noun in a parallel clause', () => {
+    const result = parseModernMorphemes(morphemes([
+      adjective('新しい', '新しい'),
+      noun('靴'), particle('を', '格助詞'),
+      verb('履い', '履く', '五段・カ行イ音便', '連用タ接続'), particle('て', '接続助詞'),
+      noun('公園'), particle('へ', '格助詞'),
+      verb('出かけ', '出かける', '一段', '連用形'), auxiliary('た', '特殊・タ'),
+    ]));
+    expect(result.clauses?.map((clause) => [clause.kind, clause.bunsetsuIds, clause.relations])).toEqual([
+      ['並立節', ['modern-bunsetsu-0', 'modern-bunsetsu-1', 'modern-bunsetsu-2'], [
+        { kind: '並立', targetClauseId: 'modern-clause-1' },
+      ]],
+      ['並立節', ['modern-bunsetsu-3', 'modern-bunsetsu-4'], undefined],
+    ]);
+    expect(result.bunsetsu[0]).toMatchObject({
+      clauseId: 'modern-clause-0', sentenceComponent: '修飾語',
+      sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: 'modern-bunsetsu-1' }],
+    });
+    expect(result.diagnostics.map((issue) => issue.code)).not.toContain(
+      'MODERN_COMPONENT_CLAUSE_UNRESOLVED',
+    );
   });
 
   it('resolves parallel predicates without making either one subordinate', () => {
@@ -150,10 +221,10 @@ describe('modern 複文 and 重文 clause analysis', () => {
       ['並立節', ['modern-bunsetsu-3', 'modern-bunsetsu-4', 'modern-bunsetsu-5', 'modern-bunsetsu-6'], undefined],
     ]);
     expect(result.bunsetsu[0]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-2' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-2' },
     ]);
     expect(result.bunsetsu[4]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-6' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-6' },
     ]);
     expect(result.diagnostics.map((issue) => issue.code)).toEqual(['MODERN_POS_UNSUPPORTED']);
   });
@@ -168,7 +239,7 @@ describe('modern 複文 and 重文 clause analysis', () => {
       verb('出かけ', '出かける', '一段', '連用タ接続'), auxiliary('た', '特殊・タ'),
     ]));
     expect(result.clauses?.map((clause) => [clause.kind, clause.bunsetsuIds, clause.relations])).toEqual([
-      ['副詞節', ['modern-bunsetsu-0', 'modern-bunsetsu-1'], [
+      ['接続節', ['modern-bunsetsu-0', 'modern-bunsetsu-1'], [
         { kind: '主節', targetClauseId: 'modern-clause-2' },
       ]],
       ['並立節', ['modern-bunsetsu-2', 'modern-bunsetsu-3'], [
@@ -194,7 +265,7 @@ describe('modern 複文 and 重文 clause analysis', () => {
     ]));
     expect(result.bunsetsu[0]).toMatchObject({
       clauseId: 'modern-clause-2', sentenceComponent: '主語',
-      sentenceRelations: [{ kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-5' }],
+      sentenceRelations: [{ kind: '主語', targetBunsetsuId: 'modern-bunsetsu-5' }],
     });
     expect(result.clauses?.flatMap((clause) => clause.bunsetsuIds)).toHaveLength(result.bunsetsu.length);
     expect(result.clauses?.map((clause) => clause.bunsetsuIds)).toEqual([
@@ -246,7 +317,30 @@ describe('modern 複文 and 重文 clause analysis', () => {
       verb('いる', 'いる', '一段', '基本形', '非自立'),
     ]));
     expect(result.clauses).toBeUndefined();
-    expect(result.bunsetsu.map((item) => item.sentenceComponent)).toEqual([undefined, '述語']);
+    expect(result.bunsetsu.map((item) => item.sentenceComponent)).toEqual(['述語', '述語']);
+    expect(result.renbunsetsu).toEqual([
+      expect.objectContaining({
+        relation: '補助の関係', bunsetsuIds: ['modern-bunsetsu-0', 'modern-bunsetsu-1'],
+        sentenceComponent: '述語',
+      }),
+    ]);
+    expect(result.sentenceType).toBe('単文');
+  });
+
+  it('classifies resolved subordinate and parallel clause structures', () => {
+    const subordinate = parseModernMorphemes(morphemes([
+      noun('雨'), particle('が', '格助詞'),
+      verb('降っ', '降る', '五段・ラ行', '連用タ接続'), auxiliary('た', '特殊・タ'), particle('ので', '接続助詞'),
+      verb('帰っ', '帰る', '五段・ラ行', '連用タ接続'), auxiliary('た', '特殊・タ'),
+    ]));
+    const parallel = parseModernMorphemes(morphemes([
+      noun('雨'), particle('が', '格助詞'),
+      verb('降っ', '降る', '五段・ラ行', '連用タ接続'), particle('て', '接続助詞'),
+      noun('風'), particle('が', '格助詞'),
+      verb('吹い', '吹く', '五段・カ行イ音便', '連用タ接続'), auxiliary('た', '特殊・タ'),
+    ]));
+    expect(subordinate.sentenceType).toBe('複文');
+    expect(parallel.sentenceType).toBe('重文');
   });
 
   it('keeps a main topic outside a relative clause and resolves the head locally', () => {
@@ -262,10 +356,10 @@ describe('modern 複文 and 重文 clause analysis', () => {
       ['modern-bunsetsu-0', 'modern-bunsetsu-3', 'modern-bunsetsu-4'],
     ]);
     expect(result.bunsetsu[0]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-4' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-4' },
     ]);
     expect(result.bunsetsu[1]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-2' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-2' },
     ]);
   });
 
@@ -317,7 +411,7 @@ describe('modern sentence components and basic 係り受け', () => {
 
     expect(subject).toMatchObject({
       sentenceComponent: '主語',
-      sentenceRelations: [{ kind: '述語の対象', targetBunsetsuId: predicate!.id }],
+      sentenceRelations: [{ kind: '主語', targetBunsetsuId: predicate!.id }],
     });
     expect(object).toMatchObject({
       sentenceComponent: '修飾語',
@@ -326,8 +420,8 @@ describe('modern sentence components and basic 係り受け', () => {
     expect(predicate).toMatchObject({
       sentenceComponent: '述語',
       sentenceRelations: [
-        { kind: '主語', targetBunsetsuId: subject!.id },
-        { kind: '述語の修飾語', targetBunsetsuId: object!.id },
+        { kind: '述語', targetBunsetsuId: subject!.id },
+        { kind: '修飾語', targetBunsetsuId: object!.id },
       ],
     });
     expect(result.diagnostics).toEqual([]);
@@ -341,7 +435,7 @@ describe('modern sentence components and basic 係り受け', () => {
     ]));
     expect(result.bunsetsu.map((item) => item.sentenceComponent)).toEqual(['主語', '修飾語', '述語']);
     expect(result.bunsetsu[0]?.sentenceRelations).toEqual([
-      { kind: '述語の対象', targetBunsetsuId: 'modern-bunsetsu-2' },
+      { kind: '主語', targetBunsetsuId: 'modern-bunsetsu-2' },
     ]);
   });
 
@@ -354,7 +448,7 @@ describe('modern sentence components and basic 係り受け', () => {
     const [modifier, object, predicate] = result.bunsetsu;
 
     expect(modifier).toMatchObject({
-      sentenceComponent: '修飾語',
+      sentenceComponent: '修飾語', modifierKind: '連体修飾語',
       sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: object!.id }],
     });
     expect(object?.sentenceComponent).toBe('修飾語');
@@ -375,7 +469,7 @@ describe('modern sentence components and basic 係り受け', () => {
     const [adnominal, location, companion, predicate] = result.bunsetsu;
 
     expect(adnominal).toMatchObject({
-      sentenceComponent: '修飾語',
+      sentenceComponent: '修飾語', modifierKind: '連体修飾語',
       sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: location!.id }],
     });
     expect(location?.sentenceRelations).toEqual([{ kind: '修飾先', targetBunsetsuId: predicate!.id }]);
@@ -391,11 +485,11 @@ describe('modern sentence components and basic 係り受け', () => {
     ]));
     const [adverb, predicate] = result.bunsetsu;
     expect(adverb).toMatchObject({
-      sentenceComponent: '修飾語',
+      sentenceComponent: '修飾語', modifierKind: '連用修飾語',
       sentenceRelations: [{ kind: '修飾先', targetBunsetsuId: predicate!.id }],
     });
     expect(predicate?.sentenceRelations).toEqual([
-      { kind: '述語の修飾語', targetBunsetsuId: adverb!.id },
+      { kind: '修飾語', targetBunsetsuId: adverb!.id },
     ]);
     expect(result.diagnostics.some((issue) => issue.code === 'MODERN_COMPONENT_SUBJECT_UNRESOLVED')).toBe(true);
   });

@@ -1,1 +1,0 @@
-{"version":3,"file":"sentence-components.d.ts","sourceRoot":"","sources":["sentence-components.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EACV,QAAQ,EACR,UAAU,EAIX,MAAM,aAAa,CAAC;AAErB,MAAM,WAAW,uBAAuB;IACtC,QAAQ,EAAE,QAAQ,EAAE,CAAC;IACrB,WAAW,EAAE,UAAU,EAAE,CAAC;CAC3B;AA4GD;;;GAGG;AACH,wBAAgB,+BAA+B,CAC7C,KAAK,EAAE,SAAS,QAAQ,EAAE,GACzB,uBAAuB,CA4GzB"}

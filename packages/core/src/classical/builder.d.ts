@@ -5,3 +5,4 @@ export declare class ClassicalPassageValidationError extends Error {
     constructor(diagnostics: ParseResult['diagnostics']);
 }
 export declare function defineClassicalPassage(input: ClassicalPassageInput): ClassicalPassageInput;
+//# sourceMappingURL=builder.d.ts.map

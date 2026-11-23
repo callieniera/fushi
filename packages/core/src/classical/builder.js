@@ -17,3 +17,4 @@ export class ClassicalPassageValidationError extends Error {
 export function defineClassicalPassage(input) {
     return input;
 }
+//# sourceMappingURL=builder.js.map

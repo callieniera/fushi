@@ -160,6 +160,16 @@ describe('bunsetsu grouping and interacting rules', () => {
     ]);
   });
 
+  it('uses 連体形 before ので and のに', () => {
+    for (const particleSurface of ['ので', 'のに']) {
+      const result = parseModernMorphemes(morphemes([
+        verb('降る', '降る', '五段・ラ行', '基本形'), particle(particleSurface, '接続助詞'),
+        verb('帰る', '帰る', '五段・ラ行', '基本形'),
+      ]));
+      expect(result.bunsetsu[0]?.tango[0]?.katsuyoukei).toBe('連体形');
+    }
+  });
+
   it('handles 読めば with a conditional base', () => {
     const result = parseModernMorphemes(morphemes([
       verb('読め', '読む', '五段・マ行', '仮定形'), particle('ば', '接続助詞'),

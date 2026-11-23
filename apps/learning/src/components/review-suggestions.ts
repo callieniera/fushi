@@ -26,8 +26,12 @@ const diagnosticMessages: Record<string, MessageKey> = {
   MODERN_COMPONENT_MODIFIER_UNRESOLVED: 'diagnosticModifierUnresolved',
 };
 
-export function reviewSuggestions(result: ParseResult, language: Language = 'en'): HTMLElement | undefined {
-  if (result.diagnostics.length === 0) return undefined;
+export function reviewSuggestions(
+  result: ParseResult,
+  language: Language = 'en',
+  diagnostics: readonly Diagnostic[] = result.diagnostics,
+): HTMLElement | undefined {
+  if (diagnostics.length === 0) return undefined;
   const t = (key: MessageKey): string => text(language, key);
   const section = element('section', {
     className: 'review-suggestions',
@@ -38,7 +42,7 @@ export function reviewSuggestions(result: ParseResult, language: Language = 'en'
     element('p', { className: 'review-intro', text: t('reviewSuggestionsIntro') }),
   );
   const list = element('ul', { className: 'review-list' });
-  for (const diagnostic of result.diagnostics) {
+  for (const diagnostic of diagnostics) {
     const item = element('li', {
       className: `review-item diagnostic-${diagnostic.severity}`,
       attributes: { 'data-diagnostic-code': diagnostic.code, 'data-severity': diagnostic.severity },
