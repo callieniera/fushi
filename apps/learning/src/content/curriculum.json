@@ -25,7 +25,7 @@
         },
         {
           "en": "Try inserting 「ね」 at a natural boundary, then use the provided answer to check it. A tango（単語） is the smaller word unit inside a segment.",
-          "ja": "自然な切れ目に「ね」を入れてみてから、監修済みの答えで確認しましょう。単語は文節の中のより小さな単位です。"
+          "ja": "自然な切れ目に「ね」を入れてみてから、用意された答えで確認しましょう。単語は文節の中のもっと小さな単位です。"
         },
         {
           "en": "For example, 食べている is split into 食べて｜いる, not treated as one word.",
@@ -42,7 +42,7 @@
       "jflNotes": [
         {
           "en": "A Japanese-for-learners verb ending such as -te iru may be taught as one construction. School grammar analyzes its words and segments separately.",
-          "ja": "日本語教育では「‐ている」のような動詞の形を一つの表現として教えることがあります。学校文法では、単語と文節をそれぞれ分けて考えます。"
+          "ja": "日本語教育では「‐ている」のような動詞の形を一つの形として教えることがあります。学校文法では、単語と文節をそれぞれ別々に考えます。"
         }
       ]
     },
@@ -67,7 +67,7 @@
       "explanation": [
         {
           "en": "A subject（主語） is what the predicate describes; a predicate（述語） expresses the action, state, or property. A modifier（修飾語） adds detail to another expression.",
-          "ja": "主語は述語が表す動作や状態の主体を示し、述語は動作、状態、性質を表します。修飾語は他の表現に詳しい意味を添えます。"
+          "ja": "主語は述語が表す動作や状態の主体を示し、述語は動作、状態、性質を表します。修飾語は他の表現にくわしい意味を添えます。"
         },
         {
           "en": "連文節 are combined phrase segments. Their provided relationships go beyond a single component label and must not be guessed from one particle alone.",
@@ -221,7 +221,7 @@
         },
         {
           "en": "The sentence explorer uses the same display, but its suggestions may be imperfect. Lesson examples and answers are checked separately.",
-          "ja": "文を調べるページでも同じ表示を使いますが、結果は参考情報です。レッスンの例文と答えは個別に確認しています。"
+          "ja": "文を調べるページでも同じ表示を使いますが、結果は参考情報です。学習単元の例文と答えは個別に確認しています。"
         }
       ],
       "passageIds": [
@@ -245,7 +245,7 @@
       },
       "prompt": {
         "en": "Select every boundary that ends a 文節. Then check your answer.",
-        "ja": "文節の終わりになる境界をすべて選び、答えを確認しましょう。"
+        "ja": "文節の終わりになる区切りをすべて選び、答えを確認しましょう。"
       },
       "stage": "bunsetsu",
       "passageIds": [
@@ -275,7 +275,7 @@
       },
       "prompt": {
         "en": "Now select every boundary that ends a 単語, including each segment’s final boundary.",
-        "ja": "今度は各文節の最後の境界も含め、単語の終わりになる境界をすべて選びましょう。"
+        "ja": "今度は各文節の最後の区切りも含め、単語の終わりになる区切りをすべて選びましょう。"
       },
       "stage": "tango",
       "passageIds": [

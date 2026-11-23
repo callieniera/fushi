@@ -14,7 +14,7 @@ import type { ProgressStore } from './storage.js';
 export function appView(content: Curriculum, progress: ProgressStore, sandbox = new ModernSandbox(), pool = new SentencePool<AnnotatedPassage>()): HTMLElement {
   const shell = element('div');
   const header = element('header', { className: 'site-header' });
-  const brand = element('a', { className: 'brand', text: 'Fushi 文節', attributes: { href: '#/lessons' } });
+  const brand = element('a', { className: 'brand', text: 'Fushi', attributes: { href: '#/lessons' } });
   const nav = element('nav');
   const routes = [
     { route: '#/lessons', key: 'lessons' },

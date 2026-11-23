@@ -83,7 +83,7 @@ test('language toggle localizes lesson content and persists without changing the
   await page.getByRole('button', { name: 'Switch to Japanese', exact: true }).click();
   await expect(page.getByRole('heading', { name: '文節から品詞分解まで学ぶ' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
-  await expect(page.getByRole('link', { name: 'レッスン', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: '学習単元', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('link', { name: '1. 文節と単語', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: '文節から品詞分解まで学ぶ' })).toBeVisible();
