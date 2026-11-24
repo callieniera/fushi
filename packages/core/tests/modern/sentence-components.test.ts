@@ -204,6 +204,42 @@ describe('modern 複文 and 重文 clause analysis', () => {
     );
   });
 
+  it('retains clause modifier components when their local targets are unresolved', () => {
+    const adnominal = parseModernMorphemes(morphemes([
+      raw('この', '連体詞'),
+      verb('降っ', '降る', '五段・ラ行', '連用タ接続'), auxiliary('た', '特殊・タ'),
+      particle('ので', '接続助詞'),
+      noun('傘'), particle('を', '格助詞'),
+      verb('持っ', '持つ', '五段・タ行', '連用タ接続'), auxiliary('た', '特殊・タ'),
+    ]));
+    expect(adnominal.clauses).toBeDefined();
+    expect(adnominal.bunsetsu[0]).toMatchObject({
+      clauseId: 'modern-clause-0', sentenceComponent: '修飾語', modifierKind: '連体修飾語',
+    });
+    expect(adnominal.bunsetsu[0]?.sentenceRelations).toBeUndefined();
+    expect(adnominal.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'MODERN_COMPONENT_MODIFIER_UNRESOLVED', start: 0, end: 2,
+    }));
+
+    const adverbial = parseModernMorphemes(morphemes([
+      noun('雨'), particle('が', '格助詞'),
+      verb('降っ', '降る', '五段・ラ行', '連用タ接続'), auxiliary('た', '特殊・タ'),
+      particle('ので', '接続助詞'),
+      raw('速く', '副詞', { posDetail1: '一般' }),
+      noun('傘'), particle('を', '格助詞'),
+      verb('持っ', '持つ', '五段・タ行', '連用タ接続'), auxiliary('た', '特殊・タ'),
+    ]));
+    expect(adverbial.clauses).toBeDefined();
+    expect(adverbial.bunsetsu[2]).toMatchObject({
+      clauseId: 'modern-clause-1', sentenceComponent: '修飾語', modifierKind: '連用修飾語',
+    });
+    expect(adverbial.bunsetsu[2]?.sentenceRelations).toBeUndefined();
+    expect(adverbial.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'MODERN_COMPONENT_MODIFIER_UNRESOLVED',
+      start: adverbial.bunsetsu[2]!.start, end: adverbial.bunsetsu[2]!.end,
+    }));
+  });
+
   it('resolves parallel predicates without making either one subordinate', () => {
     const result = parseModernMorphemes(morphemes([
       noun('私', '代名詞'), particle('は', '係助詞'),
@@ -458,7 +494,7 @@ describe('modern sentence components and basic 係り受け', () => {
     )).toBe(false);
   });
 
-  it('handles adnominal and predicate modifiers in one sentence', () => {
+  it('handles adnominal and adverbial modifiers in one sentence', () => {
     const result = parseModernMorphemes(morphemes([
       naStem('静か'), da('な', '体言接続'),
       noun('公園'), particle('で', '格助詞'),
@@ -492,6 +528,37 @@ describe('modern sentence components and basic 係り受け', () => {
       { kind: '修飾語', targetBunsetsuId: adverb!.id },
     ]);
     expect(result.diagnostics.some((issue) => issue.code === 'MODERN_COMPONENT_SUBJECT_UNRESOLVED')).toBe(true);
+  });
+
+  it('classifies temporal and purpose modifiers without treating the purpose as a final predicate', () => {
+    const result = parseModernMorphemes(morphemes([
+      noun('昨日', '副詞可能'),
+      noun('友達'), particle('と', '格助詞'),
+      noun('映画'), particle('を', '格助詞'),
+      verb('見', '見る', '一段', '連用形'), particle('に', '格助詞'),
+      verb('行き', '行く', '五段・カ行促音便', '連用形'),
+      auxiliary('まし', '特殊・マス', '連用タ接続', 'ます'), auxiliary('た', '特殊・タ'),
+    ]));
+    const [time, companion, object, purpose, predicate] = result.bunsetsu;
+
+    expect(result.bunsetsu.map((item) => item.sentenceComponent)).toEqual([
+      '修飾語', '修飾語', '修飾語', '修飾語', '述語',
+    ]);
+    expect(result.bunsetsu.every((item) => item.modifierKind === undefined || item.modifierKind === '連用修飾語')).toBe(true);
+    expect(time?.sentenceRelations).toBeUndefined();
+    expect(purpose?.sentenceRelations).toEqual([
+      { kind: '修飾先', targetBunsetsuId: predicate!.id },
+    ]);
+    expect(predicate?.sentenceRelations).toEqual([
+      { kind: '修飾語', targetBunsetsuId: companion!.id },
+      { kind: '修飾語', targetBunsetsuId: object!.id },
+      { kind: '修飾語', targetBunsetsuId: purpose!.id },
+    ]);
+    expect(result.sentenceType).toBe('単文');
+    expect(result.diagnostics.map((issue) => issue.code)).toEqual([
+      'MODERN_COMPONENT_SUBJECT_UNRESOLVED',
+      'MODERN_COMPONENT_MODIFIER_UNRESOLVED',
+    ]);
   });
 
   it('does not invent a nominal target for a準体助詞 construction', () => {
@@ -548,23 +615,27 @@ describe('modern sentence components and basic 係り受け', () => {
     expect(result.diagnostics.some((issue) => issue.code === 'MODERN_COMPONENT_PREDICATE_UNRESOLVED')).toBe(true);
   });
 
-  it('does not guess a modifier target when multiple predicates follow', () => {
+  it('retains an adverbial modifier component without guessing between predicate targets', () => {
     const result = parseModernMorphemes(morphemes([
       raw('速く', '副詞', { posDetail1: '一般' }),
       verb('走っ', '走る', '五段・ラ行', '連用タ接続'), auxiliary('た', '特殊・タ'),
       verb('読む', '読む', '五段・マ行', '基本形'),
     ]));
-    expect(result.bunsetsu[0]?.sentenceComponent).toBeUndefined();
+    expect(result.bunsetsu[0]).toMatchObject({
+      sentenceComponent: '修飾語', modifierKind: '連用修飾語',
+    });
     expect(result.bunsetsu.every((item) => item.sentenceRelations === undefined)).toBe(true);
     expect(result.diagnostics.some((issue) => issue.code === 'MODERN_COMPONENT_MODIFIER_UNRESOLVED')).toBe(true);
   });
 
-  it('leaves an adnominal modifier unresolved when no nominal target follows', () => {
+  it('retains an adnominal modifier component when no nominal target follows', () => {
     const result = parseModernMorphemes(morphemes([
       raw('この', '連体詞'),
       verb('読む', '読む', '五段・マ行', '基本形'),
     ]));
-    expect(result.bunsetsu[0]?.sentenceComponent).toBeUndefined();
+    expect(result.bunsetsu[0]).toMatchObject({
+      sentenceComponent: '修飾語', modifierKind: '連体修飾語',
+    });
     expect(result.bunsetsu[0]?.sentenceRelations).toBeUndefined();
     expect(result.diagnostics).toContainEqual(expect.objectContaining({
       code: 'MODERN_COMPONENT_MODIFIER_UNRESOLVED',

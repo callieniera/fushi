@@ -179,7 +179,7 @@ After making phrase segments, Fushi gives each segment a role when it can do so 
 
 Arrows below point to the actual Japanese segment, rather than an internal identification number. These links show basic grammatical relationships (係り受け): for example, which segment is the subject and which segment modifies the predicate.
 
-The modern analysis was checked with 27 focused sentence-component tests together with the core suite, which contains 233 tests in total. The kuromoji package has 24 tests, including real-dictionary 複文/重文 and subsidiary-predicate checks. Sentence-level results are experimental; 単語・文節 remain the primary output.
+The modern analysis was checked with 29 focused sentence-component tests together with the core suite, which contains 235 tests in total. The kuromoji package has 24 tests, including real-dictionary 複文/重文 and subsidiary-predicate checks. Sentence-level results are experimental; 単語・文節 remain the primary output.
 
 ### 2.1 Subject, object modifier, and predicate
 
@@ -255,7 +255,7 @@ The expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`
 
 The punctuation-only segment produces the expected “unsupported word type” note (`MODERN_POS_UNSUPPORTED`). The unstated subject also produces `MODERN_COMPONENT_SUBJECT_UNRESOLVED`.
 
-The focused checks also cover `赤いのを選ぶ`, where `の` stands for a thing. They confirm that Fushi remembers each word's original location, keeps relationship targets consistent, and leaves the original input unchanged. When several predicates or unclear modifier targets make a relationship uncertain, Fushi leaves the relevant role or connection unresolved and reports a warning rather than guessing.
+The focused checks also cover `赤いのを選ぶ`, where `の` stands for a thing. They confirm that Fushi remembers each word's original location, keeps relationship targets consistent, and leaves the original input unchanged. When several predicates or an absent nominal head make a modifier's target uncertain, Fushi still retains a recognizable **修飾語** component and its **連体修飾語／連用修飾語** subtype. It reports a warning and leaves the relationship unset rather than guessing a target.
 
 These links provide basic grammatical relationships (係り受け), not a complete grammatical tree of the sentence. A noun-modifying link (修飾先) is recorded only on the modifier. Subject and predicate-modifier links are recorded on both connected segments.
 
@@ -309,9 +309,9 @@ For recognized multi-clause input, `ParseResult.clauses` and direct analyzer res
 
 Nested relative clauses, quotation/complement clauses, general 連文節 construction beyond explicit subsidiary relations, general 主語節・述語節・連用修飾節 recognition, and unrestricted semantic dependency parsing are not inferred. If a candidate structure would overlap or omit bunsetsu, Fushi leaves its clause metadata absent and reports `MODERN_COMPONENT_CLAUSE_UNRESOLVED` together with the conservative component diagnostics. Multiple predicates without a supported boundary likewise remain unresolved.
 
-**Validation:** 233 core tests, 24 kuromoji-engine tests, 19 learning unit/content tests, and 6 sandbox browser tests passed, including real IPAdic examples; library/app builds passed. The unrelated pre-existing About-page browser expectation for `Fushi on GitHub (not yet public)` still fails.
+**Validation:** 235 core tests, 24 kuromoji-engine tests, 19 learning unit/content tests, and all 7 sandbox browser tests passed, including real IPAdic examples; library/app builds passed. The unrelated pre-existing About-page browser expectation for `Fushi on GitHub (not yet public)` still fails.
 
-**Verified test run:** [sentence-components.test.ts](./packages/core/tests/modern/sentence-components.test.ts) — **1 test file passed, 27 tests passed** (Vitest 4.1.12, November 24, 2026).
+**Verified test run:** [sentence-components.test.ts](./packages/core/tests/modern/sentence-components.test.ts) — **1 test file passed, 29 tests passed** (Vitest 4.1.12, November 24, 2026).
 
 ## 3. Conjugation Results (活用)
 

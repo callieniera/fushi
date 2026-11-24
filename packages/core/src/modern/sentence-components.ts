@@ -25,6 +25,7 @@ const ADNOMINAL_CASE_PARTICLES = new Set(['の']);
 const PREDICATE_CASE_PARTICLES = new Set(['を', 'に', 'へ', 'で', 'と', 'から', 'まで', 'より']);
 const PARALLEL_CONJUNCTIVE_PARTICLES = new Set(['て', 'で', 'が', 'けれど', 'けれども', 'し']);
 const CONTRASTIVE_CONJUNCTIVE_PARTICLES = new Set(['が', 'けれど', 'けれども']);
+const PURPOSE_MOTION_VERBS = new Set(['行く', '来る', '帰る']);
 
 function headOf(bunsetsu: Bunsetsu): Tango | undefined {
   return bunsetsu.tango[0];
@@ -91,6 +92,21 @@ function isClausePredicate(bunsetsu: Bunsetsu): boolean {
   const particle = conjunctiveParticleOf(bunsetsu);
   return particle !== undefined || head.subHinshi !== '補助動詞'
     && effectiveConjugationForm(bunsetsu) === '連体形';
+}
+
+function hasPurposeMotionTarget(bunsetsu: Bunsetsu | undefined): boolean {
+  if (!bunsetsu) return false;
+  const head = headOf(bunsetsu);
+  return head?.hinshi === '動詞' && head.baseForm !== undefined
+    && PURPOSE_MOTION_VERBS.has(head.baseForm) && isPredicateCandidate(bunsetsu);
+}
+
+function isPurposeModifier(bunsetsu: Bunsetsu, following: Bunsetsu | undefined): boolean {
+  const head = headOf(bunsetsu);
+  return head?.hinshi === '動詞' && head.katsuyoukei === '連用形'
+    && bunsetsu.tango.length === 2
+    && bunsetsu.tango[1]?.hinshi === '助詞' && bunsetsu.tango[1].surface === 'に'
+    && hasPurposeMotionTarget(following);
 }
 
 interface ClauseDiscovery {
@@ -267,7 +283,9 @@ function discoverClauses(
       ? selected : candidates.sort((a, b) => b.start - a.start)[0]!);
   }
 
-  const finalIndex = [...bunsetsu].reverse().findIndex(isPredicateCandidate);
+  const finalIndex = [...bunsetsu].reverse().findIndex((item) =>
+    isPredicateCandidate(item) && !isPurposeModifier(item, bunsetsu[bunsetsu.indexOf(item) + 1]),
+  );
   const finalPredicateIndex = finalIndex < 0 ? -1 : bunsetsu.length - finalIndex - 1;
   if (finalPredicateIndex < 0 || accepted.length === 0) return { clauses: [] };
   const overlappingRelative = accepted.find((item, index) => item.kind === '連体修飾節'
@@ -393,6 +411,7 @@ function isAdverbialModifier(bunsetsu: Bunsetsu): boolean {
   const head = headOf(bunsetsu);
   if (!head || hasConjunctiveParticle(bunsetsu)) return false;
   if (head.hinshi === '副詞') return true;
+  if (head.hinshi === '名詞' && head.subHinshi === '副詞可能' && bunsetsu.tango.length === 1) return true;
   return (head.hinshi === '形容詞' || head.hinshi === '形容動詞') && head.katsuyoukei === '連用形';
 }
 
@@ -464,7 +483,8 @@ export function analyzeModernSentenceComponents(
     Array.from({ length: relation.end - relation.start }, (_, index) => relation.start + index),
   ));
   const candidates = bunsetsu.filter((item, index) =>
-    !absorbed.has(index) && item.sentenceComponent === undefined && isPredicateCandidate(item),
+    !absorbed.has(index) && item.sentenceComponent === undefined && isPredicateCandidate(item)
+      && !isPurposeModifier(item, bunsetsu[index + 1]),
   );
   let predicate: Bunsetsu | undefined;
   if (candidates.length === 1) {
@@ -516,10 +536,10 @@ export function analyzeModernSentenceComponents(
 
   for (const [index, item] of bunsetsu.entries()) {
     if (item.sentenceComponent !== undefined || !isAdnominalModifier(item)) continue;
+    item.sentenceComponent = '修飾語';
+    item.modifierKind = '連体修飾語';
     const target = bunsetsu[index + 1];
     if (target && hasNominalTarget(target)) {
-      item.sentenceComponent = '修飾語';
-      item.modifierKind = '連体修飾語';
       addRelation(item, '修飾先', target.id);
     } else {
       warning(
@@ -532,9 +552,11 @@ export function analyzeModernSentenceComponents(
 
   for (const [index, item] of bunsetsu.entries()) {
     if (item.sentenceComponent !== undefined) continue;
-    const adverbial = isAdverbialModifier(item);
+    const adverbial = isAdverbialModifier(item) || isPurposeModifier(item, bunsetsu[index + 1]);
     const caseMarked = isPredicateCaseModifier(item);
     if (!adverbial && !caseMarked) continue;
+    item.sentenceComponent = '修飾語';
+    item.modifierKind = '連用修飾語';
 
     const followingPredicates = candidates.filter(
       (candidate) => candidate.start >= item.end,
@@ -553,8 +575,6 @@ export function analyzeModernSentenceComponents(
       );
       continue;
     }
-    item.sentenceComponent = '修飾語';
-    item.modifierKind = '連用修飾語';
     addRelation(item, '修飾先', resolvedTarget.id);
     addRelation(resolvedTarget, '修飾語', item.id);
   }
@@ -604,7 +624,8 @@ function analyzeDiscoveredClauses(
     const members = item.bunsetsuIndexes.map((index) => bunsetsu[index]!);
     const candidates = members.filter((candidate) =>
       !predicateIndexes.includes(bunsetsu.indexOf(candidate))
-      && candidate.sentenceComponent === undefined && isPredicateCandidate(candidate),
+      && candidate.sentenceComponent === undefined && isPredicateCandidate(candidate)
+        && !isPurposeModifier(candidate, bunsetsu[bunsetsu.indexOf(candidate) + 1]),
     );
     for (const candidate of candidates) {
       warning(
@@ -639,10 +660,10 @@ function analyzeDiscoveredClauses(
 
     for (const [index, candidate] of bunsetsu.entries()) {
       if (candidate.sentenceComponent !== undefined || !isAdnominalModifier(candidate)) continue;
+      candidate.sentenceComponent = '修飾語';
+      candidate.modifierKind = '連体修飾語';
       const target = bunsetsu[index + 1];
       if (target && target.clauseId === candidate.clauseId && hasNominalTarget(target)) {
-        candidate.sentenceComponent = '修飾語';
-        candidate.modifierKind = '連体修飾語';
         addRelation(candidate, '修飾先', target.id);
       } else {
         warning(
@@ -655,9 +676,12 @@ function analyzeDiscoveredClauses(
 
     for (const candidate of members) {
       if (candidate.sentenceComponent !== undefined) continue;
-      const adverbial = isAdverbialModifier(candidate);
+      const adverbial = isAdverbialModifier(candidate)
+        || isPurposeModifier(candidate, bunsetsu[bunsetsu.indexOf(candidate) + 1]);
       const caseMarked = isPredicateCaseModifier(candidate);
       if (!adverbial && !caseMarked) continue;
+      candidate.sentenceComponent = '修飾語';
+      candidate.modifierKind = '連用修飾語';
       const target = caseMarked
         ? candidate.end <= predicate.start ? predicate : undefined
         : bunsetsu[bunsetsu.indexOf(candidate) + 1] === predicate ? predicate : undefined;
@@ -669,8 +693,6 @@ function analyzeDiscoveredClauses(
         );
         continue;
       }
-      candidate.sentenceComponent = '修飾語';
-      candidate.modifierKind = '連用修飾語';
       addRelation(candidate, '修飾先', target.id);
       addRelation(target, '修飾語', candidate.id);
     }

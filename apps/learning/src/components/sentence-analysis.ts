@@ -53,11 +53,8 @@ export function sentenceAnalysis(result: ParseResult, language: Language = 'en')
   });
   section.append(element('h3', { id: 'sentence-analysis-title', text: t('sentenceAnalysisTitle') }));
 
-  const components = element('section', { attributes: { 'aria-labelledby': 'sentence-components-title' } });
-  components.append(
-    element('h4', { id: 'sentence-components-title', text: t('sentenceComponentsTitle') }),
-    element('p', { className: 'analysis-help', text: t('sentenceComponentsHelp') }),
-  );
+  const components = analysisSection('sentence-components-title', 'sentenceComponentsTitle', language);
+  components.append(element('p', { className: 'analysis-help', text: t('sentenceComponentsHelp') }));
   const componentList = element('dl', { className: 'component-list' });
   let unresolved = false;
   const grouped = new Set(result.renbunsetsu?.flatMap((group) => group.bunsetsuIds.slice(1)));
@@ -93,22 +90,13 @@ export function sentenceAnalysis(result: ParseResult, language: Language = 'en')
   }
   components.append(componentList);
   if (unresolved) components.append(element('p', { className: 'analysis-note', text: t('componentUnresolvedNote') }));
-  section.append(components);
-  if (result.sentenceType) {
-    section.append(element('p', {
-      className: 'sentence-type',
-      text: `${t('sentenceType')}: ${t(sentenceTypeLabels[result.sentenceType])}`,
-    }));
-  }
   if (result.renbunsetsu && result.renbunsetsu.length > 0) {
-    section.append(renbunsetsuAnalysis(result, language));
+    components.append(renbunsetsuAnalysis(result, language));
   }
+  section.append(components);
 
-  const relationships = element('section', { attributes: { 'aria-labelledby': 'sentence-relations-title' } });
-  relationships.append(
-    element('h4', { id: 'sentence-relations-title', text: t('relationsTitle') }),
-    element('p', { className: 'analysis-help', text: t('relationsHelp') }),
-  );
+  const relationships = analysisSection('sentence-relations-title', 'relationsTitle', language, true);
+  relationships.append(element('p', { className: 'analysis-help', text: t('relationsHelp') }));
   const relationList = element('ul', { className: 'relation-list' });
   for (const bunsetsu of result.bunsetsu) {
     for (const relation of bunsetsu.sentenceRelations ?? []) {
@@ -135,9 +123,28 @@ export function sentenceAnalysis(result: ParseResult, language: Language = 'en')
   else relationships.append(element('p', { className: 'analysis-note', text: t('noRelations') }));
   section.append(relationships);
 
+  const structure = analysisSection('sentence-structure-title', 'sentenceStructureTitle', language, true);
+  structure.append(element('p', {
+    className: 'sentence-type',
+    text: result.sentenceType
+      ? `${t('sentenceType')}: ${t(sentenceTypeLabels[result.sentenceType])}`
+      : t('noSentenceType'),
+  }));
   if (result.clauses && result.clauses.length > 0) {
-    section.append(clauseAnalysis(result, language));
+    structure.append(clauseAnalysis(result, language));
   }
+  section.append(structure);
+  return section;
+}
+
+function analysisSection(id: string, title: MessageKey, language: Language, lowAccuracy = false): HTMLElement {
+  const heading = element('h4', { id: `${id}-label`, text: text(language, title) });
+  const section = element('section', {
+    className: 'analysis-section',
+    attributes: { 'aria-labelledby': `${id}-label`, ...(lowAccuracy ? { 'data-accuracy': 'low' } : {}) },
+  });
+  if (lowAccuracy) heading.append(element('span', { className: 'accuracy-badge', text: text(language, 'lowAccuracy') }));
+  section.append(heading);
   return section;
 }
 

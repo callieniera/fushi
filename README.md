@@ -4,6 +4,20 @@ Fushi is a client-side TypeScript library for Japanese **school grammar（学校
 
 [Verified test results](./TEST_RESULTS.md)
 
+## Development status
+
+The first two areas are maintained foundations. The remaining three areas are sequential improvement phases: 文の成分 is completed, 文節の係り受け is next, and 単文・複文・重文 is planned.
+
+| School-grammar area | Status | Current scope |
+| --- | --- | --- |
+| **単語・品詞・活用形** (words, parts of speech, and conjugated forms) | **Maintained** | Supports 10品詞, six modern 活用形, normalization/remapping, and contextual distinctions. Kuromoji/IPAdic and heuristic ambiguity limitations remain. |
+| **文節の識別** (phrase-segment identification) | **Maintained** | Supports independent-word grouping and subsidiary-verb 文節 boundaries; this is not a claim of exhaustive tokenization accuracy. |
+| **文の成分** (sentence components) | **Completed** | Local 修飾語 component and 連体／連用 subtype labels remain available when targets are unresolved; no dependency target is guessed. |
+| **文節の係り受け** (phrase-segment dependencies) | **Next** | Planned work includes broader target resolution, topic-versus-subject interpretation, も, and omitted/shared subjects. |
+| **単文・複文・重文** (simple, complex, and compound sentences) | **Planned** | Planned work includes broader sentence-type and clause recognition. |
+
+These statuses do not imply exhaustive grammatical coverage. Existing modern sentence analysis remains best-effort and experimental.
+
 ## Grammar terminology
 
 English grammar terms below are paired with their Japanese equivalents. Code identifiers and literal output values retain their original API spelling.
@@ -11,7 +25,7 @@ English grammar terms below are paired with their Japanese equivalents. Code ide
 - **Morpheme（形態素）**: The smallest meaningful unit found by a morphological analyzer. For example, `私は本を読む` is split into `私`, `は`, `本`, `を`, and `読む`.
 - **Word（単語, `Tango`）**: A school-grammar word produced by Fushi. It can combine several morphemes when they function as one grammatical unit.
 - **Phrase segment（文節, `Bunsetsu`）**: A natural sentence chunk consisting of a **main word（自立語）**, such as a noun or verb, and any **supporting words（付属語）**, such as particles or auxiliary verbs, that follow it. For example, `私は本を読む` becomes `私は｜本を｜読む`.
-- **Sentence component（文の成分）**: The grammatical role of a phrase segment or combined phrase segment. A **subject（主語）** identifies who or what is being described; a **predicate（述語）** describes an action, state, or property; a **modifier（修飾語）** adds detail to another expression; a **connective（接続語）** links preceding context to following context; and an **independent component（独立語）**, such as a greeting or address, stands apart from the other components. Modifiers can be further described as **adnominal modifiers（連体修飾語）** or **predicate modifiers（連用修飾語）**. School grammar does not add a separate object（目的語） constituent for `〜を`.
+- **Sentence component（文の成分）**: The grammatical role of a phrase segment or combined phrase segment. A **subject（主語）** identifies who or what is being described; a **predicate（述語）** describes an action, state, or property; a **modifier（修飾語）** adds detail to another expression; a **connective（接続語）** links preceding context to following context; and an **independent component（独立語）**, such as a greeting or address, stands apart from the other components. Modifiers can be further described as **adnominal modifiers（連体修飾語）** or **adverbial modifiers（連用修飾語）**. An adverbial modifier describes a predicate; that predicate may be a verb, an adjective, or an adjectival noun. School grammar does not add a separate object（目的語） constituent for `〜を`.
 - **Dependency（係り受け）**: A grammatical relationship in which one word or phrase segment modifies or relates to another.
 - **Combined phrase segment（連文節）**: Adjacent phrase segments functioning as one constituent. Fushi experimentally recognizes the **subsidiary relation（補助の関係）** in `[verb + て/で] + [subsidiary verb（補助動詞）]`, such as `降って＋いるので` and `持って＋行きましょう`.
 - **Clause（節）**: A part of a sentence with its own subject-predicate structure. A **complex sentence（複文）** contains a **main clause（主節）** and a subordinate clause, while a **compound sentence（重文）** joins clauses of equal grammatical status.
@@ -171,7 +185,7 @@ For a full sentence such as `私は本を読む`, `私は` is the **subject（�
 { kind: '修飾語', targetBunsetsuId: 'modern-bunsetsu-1' }
 ```
 
-These are basic **dependency（係り受け）** links, not full dependency parsing. kuromoji/IPAdic does not provide dependencies between **phrase segments（文節）**. Explicit `が`/`は` subjects, local noun modifiers, and clear predicate modifiers are handled conservatively. Omitted subjects, unclear clause boundaries, and ambiguous modifier targets are not guessed: the corresponding label or relationship is absent and a structured warning is added to `diagnostics`. Applications must not treat the absence of a label as a negative grammatical assertion.
+These are basic **dependency（係り受け）** links, not full dependency parsing. kuromoji/IPAdic does not provide dependencies between **phrase segments（文節）**. Explicit `が`/`は` subjects, local noun modifiers, and clear adverbial modifiers are handled conservatively. Omitted subjects and unclear clause boundaries are not guessed. Standalone temporal nouns marked `副詞可能` and a verbal 連用形 followed by `に` and a supported motion predicate (`行く`, `来る`, or `帰る`) are also recognized as adverbial modifiers. The purpose expression is not treated as a competing final predicate. A recognizable modifier retains its `sentenceComponent: '修飾語'` and `modifierKind` even when its target is ambiguous; in that case the relationship is absent and `MODERN_COMPONENT_MODIFIER_UNRESOLVED` is added to `diagnostics`. Applications must not treat an absent label or relationship as a negative grammatical assertion.
 
 ### Complex sentences（複文） and compound sentences（重文）
 
@@ -198,7 +212,7 @@ Each **clause（節）** has a deterministic `id`, `kind`, ordered `bunsetsuIds`
 }
 ```
 
-Subjects and predicate modifiers are resolved within their clause, so `雨が → 降ったので` and `私は → 帰った` do not compete for the same predicate. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; shared subjects are not inferred. Unsupported nested relative structures and incomplete or overlapping clause assignments fall back to conservative unresolved analysis with `MODERN_COMPONENT_CLAUSE_UNRESOLVED`. Sentence types are emitted only for resolved supported structures.
+Subjects and adverbial modifiers are resolved within their clause, so `雨が → 降ったので` and `私は → 帰った` do not compete for the same predicate. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; shared subjects are not inferred. Unsupported nested relative structures and incomplete or overlapping clause assignments fall back to conservative unresolved analysis with `MODERN_COMPONENT_CLAUSE_UNRESOLVED`. Sentence types are emitted only for resolved supported structures.
 
 ### Experimental subsidiary-verb 連文節
 

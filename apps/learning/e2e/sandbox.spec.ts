@@ -17,11 +17,21 @@ test('real dictionary loads lazily, annotates modern text, and reuses cache on r
   await expect(page.getByRole('heading', { name: 'Words and phrase segments（単語・文節）' })).toBeVisible();
   await experimental.locator('summary').click();
   const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
+  const sections = analysis.locator(':scope > .analysis-section');
+  await expect(sections).toHaveCount(3);
+  await expect(sections.nth(0).locator(':scope > h4')).toHaveText('Sentence components（文の成分）');
+  await expect(sections.nth(0).locator('.accuracy-badge')).toHaveCount(0);
+  for (const section of [sections.nth(1), sections.nth(2)]) {
+    await expect(section).toHaveAttribute('data-accuracy', 'low');
+    await expect(section.locator('.accuracy-badge')).toHaveText('Low accuracy');
+  }
+  await expect(sections.nth(1).locator(':scope > h4')).toContainText('Phrase-segment dependencies（文節の係り受け）');
+  await expect(sections.nth(2).locator(':scope > h4')).toContainText('Simple, complex, and compound sentences（単文・複文・重文）');
   await expect(analysis.locator('.component-row')).toHaveCount(3);
   await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-0"]')).toContainText('私は');
   await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-0"]')).toContainText('Subject（主語）');
   await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-1"]')).toContainText('本を');
-  await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-1"]')).toContainText('Modifier（修飾語）');
+  await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-1"]')).toContainText('Modifier（修飾語）（adverbial modifier（連用修飾語））');
   await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-2"]')).toContainText('読む');
   await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-2"]')).toContainText('Predicate（述語）');
   await expect(analysis.locator('[data-source-bunsetsu-id="modern-bunsetsu-0"][data-target-bunsetsu-id="modern-bunsetsu-2"]')).toContainText('私は→読む');
@@ -46,6 +56,25 @@ test('real dictionary loads lazily, annotates modern text, and reuses cache on r
   await expect(page.getByText(/Your sentence has 3 phrase segments/)).toBeVisible({ timeout: 30_000 });
   expect(dictionaryRequests).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test('classifies temporal and purpose modifiers without competing final predicates', async ({ page }) => {
+  await page.goto('/#/sandbox');
+  await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('昨日友達と映画を見に行きました');
+  await page.getByRole('button', { name: 'Explore sentence' }).click();
+  await page.locator('.experimental-analysis summary').click();
+  const analysis = page.getByRole('region', { name: 'Sentence analysis', exact: true });
+  await expect(analysis).toBeVisible({ timeout: 30_000 });
+  for (const index of [0, 1, 2, 3]) {
+    await expect(analysis.locator(`[data-bunsetsu-id="modern-bunsetsu-${index}"]`))
+      .toContainText('adverbial modifier（連用修飾語）');
+  }
+  await expect(analysis.locator('[data-bunsetsu-id="modern-bunsetsu-4"]')).toContainText('Predicate（述語）');
+  await expect(analysis.locator('[data-source-bunsetsu-id="modern-bunsetsu-3"][data-target-bunsetsu-id="modern-bunsetsu-4"]')).toContainText('見に→行きました');
+  await expect(analysis.locator('.sentence-type')).toContainText('Simple sentence（単文）');
+  await expect(analysis.locator('[data-component="unresolved"]')).toHaveCount(0);
+  const review = page.getByRole('region', { name: 'Review suggestions', exact: true });
+  await expect(review.locator('[data-diagnostic-code="MODERN_COMPONENT_PREDICATE_AMBIGUOUS"]')).toHaveCount(0);
 });
 
 test('sentence analysis localizes, explains unresolved subjects, and clears with the result', async ({ page }) => {
@@ -129,6 +158,13 @@ test('subsidiary predicates stay grouped in the optional experimental sentence a
   await expect(page.locator('.experimental-analysis summary')).toHaveText('試験的な文解析');
   await page.locator('.experimental-analysis summary').click();
   const japanese = page.getByRole('region', { name: '文の解析', exact: true });
+  const japaneseSections = japanese.locator(':scope > .analysis-section');
+  await expect(japaneseSections).toHaveCount(3);
+  await expect(japaneseSections.nth(0).locator(':scope > h4')).toHaveText('文の成分');
+  await expect(japaneseSections.nth(1).locator(':scope > h4')).toContainText('文節の係り受け');
+  await expect(japaneseSections.nth(2).locator(':scope > h4')).toContainText('単文・複文・重文');
+  await expect(japaneseSections.locator('.accuracy-badge')).toHaveText(['精度が低い', '精度が低い']);
+  await expect(japaneseSections.nth(2).locator('.clause-item')).toHaveCount(2);
   await expect(japanese.locator('.component-row[data-renbunsetsu-id="modern-renbunsetsu-0"]')).toContainText('接続語');
   await expect(japanese.locator('[data-bunsetsu-id="modern-bunsetsu-3"]')).toContainText('修飾語（連用修飾語）');
   await expect(japanese.locator('.clause-item').nth(0)).toContainText('接続節');
