@@ -70,7 +70,7 @@ describe('bunsetsu grouping and interacting rules', () => {
       verb('ある', 'ある', '五段・ラ行', '基本形'),
     ]));
     expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['同じだが', 'いろいろな', '意見が', 'ある']);
-    expect(result.bunsetsu[0]?.tango.map((t) => t.hinshi)).toEqual(['連体詞', '助動詞', '助詞']);
+    expect(result.bunsetsu[0]?.tango.map((t) => t.hinshi)).toEqual(['形容動詞', '助詞']);
     expect(result.bunsetsu[1]?.tango[0]).toMatchObject({ hinshi: '形容動詞', katsuyoukei: '連体形' });
   });
 
@@ -261,6 +261,12 @@ describe('best-effort diagnostics and invariants', () => {
   it('reports unsupported conjugation type', () => {
     const result = parseModernMorphemes(morphemes([verb('読む', '読む', '未知活用', '基本形')]));
     expect(result.bunsetsu[0]?.tango[0]?.katsuyouType).toBe('その他');
+    expect(result.diagnostics.some((d) => d.code === 'MODERN_KATSUYOU_TYPE_UNSUPPORTED')).toBe(true);
+  });
+
+  it('reports an unsupported auxiliary conjugation type', () => {
+    const result = parseModernMorphemes(morphemes([noun('本'), auxiliary('です', '未知活用')]));
+    expect(result.bunsetsu[0]?.tango[1]?.katsuyouType).toBe('その他');
     expect(result.diagnostics.some((d) => d.code === 'MODERN_KATSUYOU_TYPE_UNSUPPORTED')).toBe(true);
   });
 

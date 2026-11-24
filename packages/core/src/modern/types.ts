@@ -17,7 +17,7 @@ export interface InputStageResult {
   diagnostics: Diagnostic[];
 }
 
-export type NormalizationKind = 'plain' | 'adjectival' | 'sou' | 'prefix' | 'suffix';
+export type NormalizationKind = 'plain' | 'adjectival' | 'sou' | 'you' | 'sahen' | 'prefix' | 'suffix';
 
 export interface NormalizedToken {
   rawMorphemes: IndexedMorpheme[];

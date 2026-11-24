@@ -10,7 +10,10 @@ export type Hinshi =
   | '接続詞'
   | '感動詞'
   | '助動詞'
-  | '助詞';
+  | '助詞'
+  | '接頭詞'
+  | '接尾詞'
+  | '記号';
 
 export type ModernKatsuyoukei = '未然形' | '連用形' | '終止形' | '連体形' | '仮定形' | '命令形';
 export type ClassicalKatsuyoukei = '未然形' | '連用形' | '終止形' | '連体形' | '已然形' | '命令形';

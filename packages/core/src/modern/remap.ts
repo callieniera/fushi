@@ -33,11 +33,11 @@ const KATSUYOU_TYPES: Readonly<Record<string, ModernKatsuyouType>> = {
 };
 
 const UPPER_ICHIDAN_BASES = new Set([
-  'いる', '居る', '射る', '鋳る', '着る', '着きる', '見る', '観る', '診る', '視る', '似る', '煮る',
+  'いる', '居る', '射る', '鋳る', '着る', '見る', '観る', '診る', '視る', '似る', '煮る',
   '干る', '率いる', '用いる', '顧みる', '省みる', '試みる', '悔いる', '報いる', '落ちる', '生きる',
-  '起きる', 'できる', '出来る', '過ぎる', '借りる', '足りる', '降りる', '下りる', '伸びる', '信じる',
-  '感じる', '論じる', '演じる', '閉じる', '応じる', '禁じる', '命じる', '記じる', '準じる', '見える',
-  '聞こえる', '聴こえる', '得る', '獲る', '寝る', '経る', '出る', 'いでる',
+  '起きる', '過ぎる', '借りる', '足りる', '降りる', '下りる', '伸びる', '信じる',
+  '感じる', '論じる', '演じる', '閉じる', '応じる', '禁じる', '命じる', '準じる',
+  '強いる', '滅びる',
 ]);
 
 const KATSUYOUKEI: Readonly<Record<string, ModernKatsuyoukei>> = {
@@ -66,7 +66,7 @@ const KATSUYOUKEI: Readonly<Record<string, ModernKatsuyoukei>> = {
 };
 
 const INDEPENDENT_POS = new Set<Hinshi>([
-  '動詞', '形容詞', '形容動詞', '名詞', '副詞', '連体詞', '接続詞', '感動詞',
+  '動詞', '形容詞', '形容動詞', '名詞', '副詞', '連体詞', '接続詞', '感動詞', '記号',
 ]);
 
 function isNaiAfterVerb(tokens: readonly NormalizedToken[], index: number): boolean {
@@ -93,7 +93,8 @@ function isNaiAdjective(tokens: readonly NormalizedToken[], index: number): bool
 function isAppearanceSou(tokens: readonly NormalizedToken[], index: number): boolean {
   const token = tokens[index];
   if (!token) return false;
-  if (token.source.raw.posDetail1 === '接尾') return true;
+  const sou = token.rawMorphemes.find(({ raw }) => raw.surface === 'そう' && raw.posDetail2 === '助動詞語幹');
+  if (sou?.raw.posDetail1 === '接尾') return true;
   const previous = tokens[index - 1];
   if (!previous) return false;
   const raw = previous.conjugationSource.raw;
@@ -105,7 +106,8 @@ function isAppearanceSou(tokens: readonly NormalizedToken[], index: number): boo
 function isHearsaySou(tokens: readonly NormalizedToken[], index: number): boolean {
   const token = tokens[index];
   if (!token) return false;
-  if (token.source.raw.posDetail1 === '特殊' && index > 0) return true;
+  const sou = token.rawMorphemes.find(({ raw }) => raw.surface === 'そう' && raw.posDetail2 === '助動詞語幹');
+  if (sou?.raw.posDetail1 === '特殊' && index > 0) return true;
   const previous = tokens[index - 1];
   if (!previous) return false;
   const raw = previous.conjugationSource.raw;
@@ -147,10 +149,13 @@ function noSubHinshi(token: NormalizedToken): string | undefined {
 function mapHinshi(token: NormalizedToken): Hinshi | undefined {
   if (token.forcedHinshi) return token.forcedHinshi;
   const pos = token.source.raw.pos;
-  if (pos === '接頭詞' || pos === '接頭辞' || pos === '接尾辞') return '名詞';
-  if (pos === '名詞' && token.source.raw.posDetail1 === '接尾') return '名詞';
+  if (pos === '接頭詞' || pos === '接頭辞') return '接頭詞';
+  if (pos === '接尾辞') return '接尾詞';
+  if (pos === '名詞' && token.source.raw.posDetail1 === '接尾') return '接尾詞';
   if (pos === '名詞' && token.source.raw.posDetail1 === '形容動詞語幹') return '名詞';
   if (pos === '名詞' && token.source.raw.posDetail2 === '助動詞語幹') return '助動詞';
+  if (pos === 'フィラー') return '感動詞';
+  if (pos === '記号') return '記号';
   if (pos === '動詞' || pos === '形容詞' || pos === '名詞' || pos === '副詞' || pos === '連体詞' ||
     pos === '接続詞' || pos === '感動詞' || pos === '助動詞' || pos === '助詞') return pos;
   return undefined;
@@ -163,15 +168,14 @@ function mapKatsuyouType(token: NormalizedToken, hinshi: Hinshi): ModernKatsuyou
   if (!type) return undefined;
   if (type.startsWith('五段')) return '五段';
   if (type.startsWith('一段')) {
-    return UPPER_ICHIDAN_BASES.has(raw.baseForm ?? token.baseForm ?? '') ? '上一段' : '下一段';
+    const base = raw.baseForm ?? token.baseForm ?? '';
+    if ((base === '経る' && raw.reading === 'フル') || (base === '獲る' && raw.reading === 'ウル')) return '上一段';
+    return UPPER_ICHIDAN_BASES.has(base) ? '上一段' : '下一段';
   }
   if (type.startsWith('サ変')) return 'サ変';
   if (type.startsWith('カ変')) return 'カ変';
   if (type.startsWith('形容詞')) return '形容詞';
-  const mapped = KATSUYOU_TYPES[type];
-  if (mapped) return mapped;
-  if (hinshi === '助動詞') return 'その他';
-  return undefined;
+  return KATSUYOU_TYPES[type];
 }
 
 function mapKatsuyoukei(token: NormalizedToken, hinshi: Hinshi): ModernKatsuyoukei | undefined {
@@ -194,18 +198,75 @@ function mapKatsuyoukei(token: NormalizedToken, hinshi: Hinshi): ModernKatsuyouk
 function isAttributiveContext(tokens: readonly NormalizedToken[], index: number): boolean {
   const next = tokens[index + 1];
   if (!next) return false;
-  const raw = next.source.raw;
-  if (raw.pos === '名詞' && raw.posDetail1 !== '接尾') return true;
+  if (next.kind === 'you') return true;
+  const raw = next.kind === 'sou'
+    ? next.rawMorphemes[0]?.raw ?? next.source.raw
+    : next.source.raw;
+  if (raw.pos === '名詞' && raw.posDetail1 !== '接尾' && raw.posDetail2 !== '助動詞語幹') return true;
   if (raw.pos === '助詞' && (raw.posDetail1 === '連体化'
     || raw.surface === 'の' || raw.surface === 'ので' || raw.surface === 'のに')) return true;
   return false;
 }
 
 function isTerminalContext(tokens: readonly NormalizedToken[], index: number): boolean {
+  if (tokens[index]?.kind === 'you' && tokens[index]?.forcedKatsuyoukei === '連体形') return false;
   const next = tokens[index + 1];
   if (!next) return true;
   const raw = next.source.raw;
   return raw.pos === '記号' || raw.pos === '助詞' && raw.posDetail1 === '終助詞';
+}
+
+function isNominalToken(token: NormalizedToken | undefined): boolean {
+  if (!token) return false;
+  if (token.forcedHinshi !== undefined) return token.forcedHinshi === '名詞';
+  if (token.source.raw.surface === 'の' && token.source.raw.posDetail1 === '非自立') return false;
+  return token.source.raw.pos === '名詞' && token.source.raw.posDetail1 !== '接尾' &&
+    token.source.raw.posDetail2 !== '助動詞語幹';
+}
+
+function isAttributiveModifier(tokens: readonly NormalizedToken[], index: number): boolean {
+  const token = tokens[index];
+  if (!token) return false;
+  const raw = token.conjugationSource.raw;
+  if (token.kind === 'adjectival') return token.forcedKatsuyoukei === '連体形';
+  if (token.source.raw.pos === '連体詞') return true;
+  if (token.source.raw.pos === '接頭詞' || token.source.raw.pos === '接頭辞') return true;
+  if (raw.conjugatedForm === '連体形' || raw.conjugatedForm === '体言接続' || raw.conjugatedForm === '体言接続特殊' ||
+    raw.conjugatedForm === '体言接続特殊２') return true;
+  if (raw.conjugatedForm === '基本形') {
+    const following = tokens[index + 1];
+    return isNominalToken(following) || following?.source.raw.pos === '助詞' && following.source.raw.surface === 'の';
+  }
+  return false;
+}
+
+function anoModifiesNominal(tokens: readonly NormalizedToken[], index: number): boolean {
+  let cursor = index + 1;
+  while (cursor < tokens.length) {
+    const token = tokens[cursor];
+    if (!token) return false;
+    if (isNominalToken(token)) return true;
+    if (!isAttributiveModifier(tokens, cursor)) return false;
+    cursor += 1;
+  }
+  return false;
+}
+
+function compoundKaSubHinshi(tokens: readonly NormalizedToken[], index: number): string {
+  const previous = tokens[index - 1];
+  const next = tokens[index + 1];
+  if (next && (next.source.raw.pos === '動詞' || next.source.raw.pos === '形容詞' ||
+    next.source.raw.pos === '名詞' || next.source.raw.pos === '連体詞')) {
+    const following = tokens[index + 2];
+    if (following?.source.raw.surface === 'か') return '並立助詞';
+  }
+  if (previous && isNominalToken(previous) && next && next.source.raw.pos !== '記号' &&
+    !(next.source.raw.pos === '助詞' && next.source.raw.posDetail1 === '終助詞')) return '副助詞';
+  if (next?.source.raw.pos === '名詞' && next.source.raw.posDetail2 === '助動詞語幹') return '副助詞';
+  if ((!next || next.source.raw.pos === '記号') &&
+    previous && (previous.source.raw.pos === '動詞' || previous.source.raw.pos === '形容詞' ||
+      previous.source.raw.pos === '助動詞')) return '終助詞';
+  return '副助詞';
 }
 
 function addWarning(
@@ -231,7 +292,8 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
     const raw = token.source.raw;
     let hinshi = mapHinshi(token);
     let subHinshi = noSubHinshi(token);
-    let independent = token.forcedIndependent ?? (hinshi !== undefined && INDEPENDENT_POS.has(hinshi));
+    let independent = token.forcedIndependent ??
+      (hinshi !== undefined && hinshi !== '接頭詞' && hinshi !== '接尾詞' && INDEPENDENT_POS.has(hinshi));
     let katsuyouType = mapKatsuyouType(token, hinshi ?? '名詞');
     let katsuyoukei = mapKatsuyoukei(token, hinshi ?? '名詞');
     let meaningTags = token.meaningTags ? [...token.meaningTags] : undefined;
@@ -244,7 +306,7 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
         katsuyouType = '特殊・ナイ';
       } else if (isNaiAdjective(tokens, index) || raw.pos === '形容詞') {
         hinshi = '形容詞';
-        subHinshi = '補助形容詞';
+        subHinshi = isNaiAdjective(tokens, index) || raw.posDetail1 === '非自立' ? '補助形容詞' : raw.posDetail1;
         independent = true;
         katsuyouType = '形容詞';
       }
@@ -279,7 +341,8 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
       );
     }
 
-    if (raw.pos === '助動詞' && raw.conjugationType === '特殊・ダ') {
+    if (raw.pos === '助動詞' && raw.conjugationType === '特殊・ダ' && token.kind !== 'adjectival' &&
+      token.kind !== 'sou' && token.kind !== 'you') {
       hinshi = '助動詞';
       independent = false;
       subHinshi = '断定';
@@ -296,6 +359,18 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
       else if (raw.posDetail1 === '副詞化') subHinshi = '副助詞';
       else if (raw.posDetail1 === '格助詞' && raw.posDetail2 === '連体') subHinshi = '格助詞';
       else subHinshi = '準体助詞';
+    }
+
+    if (raw.surface === 'の' && raw.baseForm === 'の' && raw.pos === '名詞' && raw.posDetail1 === '非自立') {
+      hinshi = '助詞';
+      subHinshi = '準体助詞';
+      independent = false;
+      katsuyouType = undefined;
+      katsuyoukei = undefined;
+    }
+
+    if (raw.pos === '助詞' && raw.posDetail1 === '副助詞／並立助詞／終助詞') {
+      subHinshi = compoundKaSubHinshi(tokens, index);
     }
 
     if (raw.surface === 'あの' && (raw.pos === 'フィラー' || raw.pos === '連体詞')) {
@@ -316,27 +391,9 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
         subHinshi = undefined;
         independent = true;
       } else {
-        // Check if there's any 体言 (noun-like) after あの in the remaining tokens
-        const hasTaigenAfter = tokens.slice(index + 1).some((t) => {
-          const r = t.source.raw;
-          const c = t.conjugationSource.raw;
-          return r.pos === '名詞' ||
-            r.pos === '数詞' ||
-            (r.pos === '接頭詞' && r.posDetail1 === '名詞接続') ||
-            (r.pos === '動詞' && (c?.conjugatedForm === '体言接続' || c?.conjugatedForm === '連体形')) ||
-            (r.pos === '形容詞' && (c?.conjugatedForm === '体言接続' || c?.conjugatedForm === '連体形')) ||
-            (r.pos === '助動詞' && (c?.conjugatedForm === '体言接続' || c?.conjugatedForm === '連体形'));
-        });
-        if (hasTaigenAfter) {
-          hinshi = '連体詞';
-          subHinshi = undefined;
-          independent = true;
-        } else {
-          // Grammar likely wrong, but default to 感動詞 as it's the more likely interpretation in isolation
-          hinshi = '感動詞';
-          subHinshi = undefined;
-          independent = true;
-        }
+        hinshi = anoModifiesNominal(tokens, index) ? '連体詞' : '感動詞';
+        subHinshi = undefined;
+        independent = true;
       }
     }
 
@@ -359,9 +416,9 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
       katsuyoukei = '終止形';
     }
 
-    if (!hinshi && raw.pos === '記号') {
-      hinshi = '名詞';
-      subHinshi = '記号';
+    if (raw.pos === '記号') {
+      hinshi = '記号';
+      subHinshi = undefined;
       independent = true;
     } else if (!hinshi) {
       hinshi = '名詞';

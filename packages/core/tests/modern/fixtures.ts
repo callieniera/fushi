@@ -30,7 +30,10 @@ export const verb = (
   type: string,
   form: string,
   detail = '自立',
-): RawSpec => raw(surface, '動詞', { posDetail1: detail, baseForm, conjugationType: type, conjugatedForm: form });
+  reading?: string,
+): RawSpec => raw(surface, '動詞', {
+  posDetail1: detail, baseForm, conjugationType: type, conjugatedForm: form, ...(reading ? { reading } : {}),
+});
 export const adjective = (
   surface: string,
   baseForm: string,

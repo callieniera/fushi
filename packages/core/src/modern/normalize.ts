@@ -37,14 +37,18 @@ function makeToken(
 }
 
 function isAdjectivalStem(item: IndexedMorpheme): boolean {
-  return item.raw.pos === '名詞' && item.raw.posDetail1 === '形容動詞語幹';
+  return item.raw.pos === '名詞' &&
+    (item.raw.posDetail1 === '形容動詞語幹' || item.raw.posDetail2 === '形容動詞語幹');
 }
 
 function isAdjectivalEnding(item: IndexedMorpheme): boolean {
   const { raw } = item;
-  if (!(raw.surface in ADJECTIVAL_FORMS)) return false;
-  if (raw.pos === '助動詞' && raw.conjugationType === '特殊・ダ') return true;
-  return raw.pos === '助詞' && raw.posDetail1 === '副詞化' && raw.surface === 'に';
+  if (raw.pos === '助詞' && raw.posDetail1 === '副詞化' && raw.surface === 'に') return true;
+  return raw.pos === '助動詞' && raw.conjugationType === '特殊・ダ' && raw.surface in ADJECTIVAL_FORMS;
+}
+
+function isPoliteDaEnding(item: IndexedMorpheme): boolean {
+  return item.raw.pos === '助動詞' && item.raw.conjugationType === '特殊・デス' && item.raw.surface === 'です';
 }
 
 function isPrefix(item: IndexedMorpheme): boolean {
@@ -52,7 +56,7 @@ function isPrefix(item: IndexedMorpheme): boolean {
 }
 
 function isSuffix(item: IndexedMorpheme): boolean {
-  return item.raw.posDetail1 === '接尾' || item.raw.pos === '接尾辞';
+  return item.raw.posDetail1 === '接尾' || item.raw.pos === '接尾辞' || isVerbSuffix(item);
 }
 
 function isSou(item: IndexedMorpheme): boolean {
@@ -62,7 +66,7 @@ function isSou(item: IndexedMorpheme): boolean {
 function isIndependentRaw(item: IndexedMorpheme): boolean {
   const { raw } = item;
   if (raw.pos === '助詞' || raw.pos === '助動詞' || isPrefix(item) || isSuffix(item)) return false;
-  // フィラー (fillers like あの, ええと) should not be merged with suffixes
+  // IPAdic fillers must stay separate until they are remapped to school grammar.
   if (raw.pos === 'フィラー') return false;
   return raw.posDetail1 !== '非自立';
 }
@@ -76,8 +80,24 @@ function isAnoSaFiller(previous: IndexedMorpheme, suffix: IndexedMorpheme): bool
     suffix.raw.surface === 'さ' && suffix.raw.posDetail1 === '接尾' && suffix.raw.posDetail2 === '特殊';
 }
 
-function isAdjectivalEndingAfterSou(item: IndexedMorpheme): boolean {
-  return item.raw.pos === '助動詞' && item.raw.conjugationType === '特殊・ダ' && item.raw.surface in ADJECTIVAL_FORMS;
+function isAuxiliaryStem(item: IndexedMorpheme, surface: string): boolean {
+  return item.raw.surface === surface && item.raw.posDetail2 === '助動詞語幹';
+}
+
+function isSahenHost(item: IndexedMorpheme): boolean {
+  return item.raw.pos === '名詞' && item.raw.posDetail1 === 'サ変接続';
+}
+
+function isSuru(item: IndexedMorpheme): boolean {
+  return item.raw.pos === '動詞' && item.raw.baseForm === 'する' && item.raw.conjugationType?.startsWith('サ変') === true;
+}
+
+function isVerbSuffix(item: IndexedMorpheme): boolean {
+  return item.raw.pos === '動詞' && item.raw.posDetail1 === '接尾';
+}
+
+function isOnaji(item: IndexedMorpheme): boolean {
+  return item.raw.surface === '同じ' && item.raw.pos === '連体詞';
 }
 
 function ids(items: IndexedMorpheme[]): number[] {
@@ -85,9 +105,9 @@ function ids(items: IndexedMorpheme[]): number[] {
 }
 
 /**
- * Ordered reconstruction passes: (1) 形容動詞語幹 + one permitted ending,
- * (2) そう + だ-ending, (3) prefixes, (4) suffixes. A morpheme is consumed by
- * at most one pass, so overlapping rules cannot depend on input array order.
+ * Reconstruct inflecting words before joining prefixes and suffixes. Each
+ * morpheme is consumed at most once, so overlapping rules cannot depend on
+ * input array order.
  */
 export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]): NormalizationResult {
   const diagnostics: Diagnostic[] = [];
@@ -98,16 +118,23 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
     const stem = morphemes[i];
     const ending = morphemes[i + 1];
     if (!stem || !ending || consumed.has(i) || consumed.has(i + 1)) continue;
-    if (!isAdjectivalStem(stem) || !isAdjectivalEnding(ending)) continue;
-    const katsuyoukei = ADJECTIVAL_FORMS[ending.raw.surface];
+    if (!isAdjectivalStem(stem) || (!isAdjectivalEnding(ending) &&
+      !(isAdjectivalSuffix(stem) && isPoliteDaEnding(ending)))) continue;
+    const polite = isPoliteDaEnding(ending);
+    const katsuyoukei = polite ? '終止形' : ADJECTIVAL_FORMS[ending.raw.surface];
     if (!katsuyoukei) continue;
+    const suffix = morphemes[i - 1];
+    const stemStart = suffix && isAdjectivalSuffix(stem) && isIndependentRaw(suffix) && !consumed.has(i - 1) ? i - 1 : i;
+    const rawMorphemes = morphemes.slice(stemStart, i + 2);
+    const mergedStem = rawMorphemes.slice(0, -1).map(({ raw }) => raw.surface).join('');
+    consumed.add(stemStart);
     consumed.add(i);
     consumed.add(i + 1);
     replacements.set(
-      i,
-      makeToken([stem, ending], 'adjectival', {
+      stemStart,
+      makeToken(rawMorphemes, 'adjectival', {
         conjugationSource: ending,
-        baseForm: `${stem.raw.baseForm ?? stem.raw.surface}だ`,
+        baseForm: `${mergedStem}だ`,
         forcedHinshi: '形容動詞',
         forcedIndependent: true,
         forcedKatsuyouType: 'その他',
@@ -117,23 +144,49 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
   }
 
   for (let i = 0; i < morphemes.length - 1; i += 1) {
-    const sou = morphemes[i];
+    const stem = morphemes[i];
     const ending = morphemes[i + 1];
-    if (!sou || !ending || consumed.has(i) || consumed.has(i + 1)) continue;
-    if (!isSou(sou) || !isAdjectivalEndingAfterSou(ending)) continue;
-    const katsuyoukei = ADJECTIVAL_FORMS[ending.raw.surface];
+    if (!stem || !ending || consumed.has(i) || consumed.has(i + 1)) continue;
+    const isSouStem = isSou(stem);
+    const isYouStem = isAuxiliaryStem(stem, 'よう');
+    const onaji = isOnaji(stem);
+    if ((!isSouStem && !isYouStem && !onaji) ||
+      (!isAdjectivalEnding(ending) && !isPoliteDaEnding(ending))) continue;
+    if (onaji && (ending.raw.surface === 'に' || ending.raw.surface === 'な' || isPoliteDaEnding(ending))) continue;
+    const polite = isPoliteDaEnding(ending);
+    const katsuyoukei = polite ? '終止形' : ADJECTIVAL_FORMS[ending.raw.surface];
     if (!katsuyoukei) continue;
+    consumed.add(i);
+    consumed.add(i + 1);
+    const baseForm = onaji ? '同じだ' : `${stem.raw.surface}だ`;
+    replacements.set(
+      i,
+      makeToken([stem, ending], isYouStem ? 'you' : onaji ? 'adjectival' : 'sou', {
+        conjugationSource: ending,
+        baseForm,
+        forcedHinshi: onaji ? '形容動詞' : '助動詞',
+        forcedIndependent: onaji,
+        forcedKatsuyouType: 'その他',
+        forcedKatsuyoukei: katsuyoukei,
+      }),
+    );
+  }
+
+  for (let i = 0; i < morphemes.length - 1; i += 1) {
+    const host = morphemes[i];
+    const suru = morphemes[i + 1];
+    if (!host || !suru || consumed.has(i) || consumed.has(i + 1)) continue;
+    if (!isSahenHost(host) || !isSuru(suru)) continue;
     consumed.add(i);
     consumed.add(i + 1);
     replacements.set(
       i,
-      makeToken([sou, ending], 'sou', {
-        conjugationSource: ending,
-        baseForm: 'そうだ',
-        forcedHinshi: '助動詞',
-        forcedIndependent: false,
-        forcedKatsuyouType: 'その他',
-        forcedKatsuyoukei: katsuyoukei,
+      makeToken([host, suru], 'sahen', {
+        source: host,
+        conjugationSource: suru,
+        baseForm: `${host.raw.baseForm ?? host.raw.surface}する`,
+        forcedHinshi: '動詞',
+        forcedIndependent: true,
       }),
     );
   }
@@ -184,47 +237,39 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
     // Skip suffix merging for あのさ (filler + special suffix)
     if (isAnoSaFiller(previous, suffix)) continue;
     const previousReplacement = replacements.get(i - 1);
-    if (previousReplacement && previousReplacement.kind !== 'adjectival' && previousReplacement.kind !== 'sou') {
-      consumed.add(i);
-      replacements.set(
-        i - 1,
-        makeToken([...previousReplacement.rawMorphemes, suffix], 'suffix', {
-          ...previousReplacement,
-          rawMorphemes: [...previousReplacement.rawMorphemes, suffix],
-          kind: 'suffix',
-          surface: `${previousReplacement.surface}${suffix.raw.surface}`,
-          baseForm: `${previousReplacement.baseForm ?? ''}${suffix.raw.surface}`,
-          reading: previousReplacement.reading !== undefined && suffix.raw.reading !== undefined
-            ? `${previousReplacement.reading}${suffix.raw.reading}`
-            : undefined,
-          end: suffix.raw.end,
-          forcedHinshi: '名詞',
-          forcedIndependent: true,
-          forcedKatsuyouType: 'その他',
-          ...(previousReplacement.forcedKatsuyoukei
-            ? { forcedKatsuyoukei: previousReplacement.forcedKatsuyoukei }
-            : {}),
-        }),
-      );
-      continue;
-    }
-    if (consumed.has(i - 1) || !isIndependentRaw(previous)) continue;
+    const host = previousReplacement ?? makeToken([previous]);
+    if (consumed.has(i - 1) && !previousReplacement) continue;
+    if (!previousReplacement && !isIndependentRaw(previous)) continue;
+    if (previousReplacement && (previousReplacement.kind === 'adjectival' ||
+      previousReplacement.kind === 'sou' || previousReplacement.kind === 'you')) continue;
     consumed.add(i - 1);
     consumed.add(i);
-    const adjectival = isAdjectivalSuffix(suffix);
+    const verbSuffix = isVerbSuffix(suffix);
+    const adjectival = !verbSuffix && (isAdjectivalSuffix(suffix) || host.forcedHinshi === '形容動詞');
+    const stemSurface = host.rawMorphemes.at(-1)?.raw.surface ?? host.surface;
+    const baseForm = verbSuffix
+      ? `${stemSurface}${suffix.raw.baseForm ?? suffix.raw.surface}`
+      : previousReplacement && previousReplacement.kind !== 'plain'
+        ? `${previousReplacement.baseForm ?? previousReplacement.surface}${suffix.raw.surface}`
+        : `${stemSurface}${suffix.raw.surface}`;
+    const forcedSubHinshi = verbSuffix ? '接尾' : adjectival ? '形容動詞語幹' : undefined;
     replacements.set(
       i - 1,
-      makeToken([previous, suffix], 'suffix', {
-        baseForm: `${previous.raw.baseForm ?? previous.raw.surface}${suffix.raw.surface}`,
-        forcedHinshi: '名詞',
+      makeToken([...host.rawMorphemes, suffix], 'suffix', {
+        ...host,
+        rawMorphemes: [...host.rawMorphemes, suffix],
+        kind: 'suffix',
+        surface: `${host.surface}${suffix.raw.surface}`,
+        baseForm,
+        reading: host.reading !== undefined && suffix.raw.reading !== undefined
+          ? `${host.reading}${suffix.raw.reading}`
+          : undefined,
+        conjugationSource: suffix,
+        end: suffix.raw.end,
+        forcedHinshi: verbSuffix ? '動詞' : adjectival ? '形容動詞' : '名詞',
+        ...(forcedSubHinshi ? { forcedSubHinshi } : {}),
         forcedIndependent: true,
-        ...(adjectival
-          ? {
-              forcedHinshi: '形容動詞' as const,
-              forcedIndependent: true,
-              forcedKatsuyouType: 'その他' as const,
-            }
-          : {}),
+        ...(adjectival ? { forcedKatsuyouType: 'その他' as const } : {}),
       }),
     );
   }

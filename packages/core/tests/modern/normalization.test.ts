@@ -29,7 +29,7 @@ const cases: Case[] = [
   { name: 'きれいだ', input: [naStem('きれい'), da()], surface: 'きれいだ', hinshi: '形容動詞', form: '終止形', rawCount: 2 },
   { name: '元気だった', input: [naStem('元気'), da('だっ', '連用タ接続'), auxiliary('た', '特殊・タ')], surface: '元気だっ', hinshi: '形容動詞', form: '連用形', rawCount: 2 },
   { name: '丁寧に', input: [naStem('丁寧'), particle('に', '副詞化')], surface: '丁寧に', hinshi: '形容動詞', form: '連用形', rawCount: 2 },
-  { name: '同じだ', input: [raw('同じ', '連体詞'), da()], surface: '同じ', hinshi: '連体詞', independent: true, rawCount: 1 },
+  { name: '同じだ', input: [raw('同じ', '連体詞'), da()], surface: '同じだ', hinshi: '形容動詞', form: '終止形', type: 'その他', independent: true, rawCount: 2 },
   { name: '同じな', input: [raw('同じ', '連体詞'), da('な', '体言接続'), noun('色')], surface: '同じ', hinshi: '連体詞', independent: true, rawCount: 1 },
   { name: '大きな', input: [raw('大きな', '連体詞'), noun('家')], surface: '大きな', hinshi: '連体詞', independent: true },
   { name: '大きい', input: [adjective('大きい', '大きい'), noun('家')], surface: '大きい', hinshi: '形容詞', form: '連体形', type: '形容詞' },
@@ -80,6 +80,128 @@ describe('normalization and conjugation grammar traps', () => {
   });
 });
 
+describe('school-word reconstruction repairs', () => {
+  it.each([
+    ['勉強する', 'する', '基本形', '終止形'],
+    ['勉強します', 'し', '連用形', '連用形'],
+    ['勉強した', 'し', '連用形', '連用形'],
+    ['勉強しない', 'し', '未然形', '未然形'],
+    ['勉強しよう', 'しよ', '未然ウ接続', '未然形'],
+    ['勉強すれば', 'すれ', '仮定形', '仮定形'],
+    ['勉強しろ', 'しろ', '命令ｒｏ', '命令形'],
+  ])('reconstructs %s as one サ変 verb', (_name, suruSurface, sourceForm, expectedForm) => {
+    const input = morphemes([noun('勉強', 'サ変接続'), verb(suruSurface, 'する', 'サ変・スル', sourceForm)]);
+    const result = parseModernMorphemes(input);
+    const token = result.bunsetsu[0]?.tango[0];
+    expect(token).toMatchObject({
+      surface: `勉強${suruSurface}`,
+      baseForm: '勉強する',
+      hinshi: '動詞',
+      katsuyouType: 'サ変',
+      katsuyoukei: expectedForm,
+      isIndependent: true,
+      start: 0,
+      end: input[1]?.end,
+    });
+    expect(token?.rawMorphemes).toEqual(input);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('does not reconstruct 勉強をする across を', () => {
+    const result = parseModernMorphemes(morphemes([
+      noun('勉強', 'サ変接続'), particle('を', '格助詞'), verb('する', 'する', 'サ変・スル', '基本形'),
+    ]));
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['勉強を', 'する']);
+    expect(result.bunsetsu[0]?.tango[0]?.hinshi).toBe('名詞');
+  });
+
+  it.each([
+    [da(), '科学的だ', '終止形'],
+    [da('な', '体言接続'), '科学的な', '連体形'],
+    [da('で', '連用形'), '科学的で', '連用形'],
+    [particle('に', '副詞化'), '科学的に', '連用形'],
+    [auxiliary('です', '特殊・デス'), '科学的です', '終止形'],
+  ])('reconstructs a suffix-derived adjectival verb with its ending', (ending, surface, form) => {
+    const input = morphemes([noun('科学'), suffix('的', '形容動詞語幹'), ending]);
+    const result = parseModernMorphemes(input);
+    expect(result.bunsetsu[0]?.tango[0]).toMatchObject({
+      surface,
+      baseForm: '科学的だ',
+      hinshi: '形容動詞',
+      katsuyouType: 'その他',
+      katsuyoukei: form,
+      isIndependent: true,
+    });
+    expect(result.bunsetsu[0]?.tango[0]?.rawMorphemes).toEqual(input);
+  });
+
+  it('reconstructs 同じだった without changing attributive 同じな', () => {
+    const past = parseModernMorphemes(morphemes([
+      raw('同じ', '連体詞'), da('だっ', '連用タ接続'), auxiliary('た', '特殊・タ'),
+    ]));
+    expect(past.bunsetsu[0]?.tango[0]).toMatchObject({
+      surface: '同じだっ', baseForm: '同じだ', hinshi: '形容動詞', katsuyoukei: '連用形',
+    });
+    const attributive = parseModernMorphemes(morphemes([raw('同じ', '連体詞'), da('な', '体言接続'), noun('色')]));
+    expect(attributive.bunsetsu[0]?.tango[0]).toMatchObject({ surface: '同じ', hinshi: '連体詞' });
+  });
+
+  it('reconstructs polite appearance and hearsay そうです', () => {
+    for (const [suru, form, subtype] of [
+      [verb('降り', '降りる', '一段', '連用形'), '連用形', '様態'],
+      [verb('降る', '降る', '五段・ラ行', '基本形'), '終止形', '伝聞'],
+    ] as const) {
+      const result = parseModernMorphemes(morphemes([
+        suru,
+        raw('そう', '名詞', { posDetail1: subtype === '様態' ? '接尾' : '特殊', posDetail2: '助動詞語幹' }),
+        auxiliary('です', '特殊・デス'),
+      ]));
+      expect(result.bunsetsu[0]?.tango[0]?.katsuyoukei).toBe(form);
+      expect(result.bunsetsu[0]?.tango[1]).toMatchObject({
+        surface: 'そうです', baseForm: 'そうだ', hinshi: '助動詞', subHinshi: subtype, katsuyoukei: '終止形',
+      });
+    }
+  });
+
+  it.each([
+    [da(), 'ようだ', '終止形'],
+    [da('な', '体言接続'), 'ような', '連体形'],
+    [da('で', '連用形'), 'ようで', '連用形'],
+    [particle('に', '副詞化'), 'ように', '連用形'],
+    [auxiliary('です', '特殊・デス'), 'ようです', '終止形'],
+  ])('reconstructs ようだ-family auxiliary %s', (ending, surface, form) => {
+    const result = parseModernMorphemes(morphemes([
+      verb('読む', '読む', '五段・マ行', '基本形'),
+      raw('よう', '名詞', { posDetail1: '非自立', posDetail2: '助動詞語幹' }),
+      ending,
+    ]));
+    expect(result.bunsetsu[0]?.tango[0]?.katsuyoukei).toBe('連体形');
+    expect(result.bunsetsu[0]?.tango[1]).toMatchObject({
+      surface, baseForm: 'ようだ', hinshi: '助動詞', katsuyoukei: form, isIndependent: false,
+    });
+  });
+
+  it('uses the suffix conjugation and base form for 痛がる', () => {
+    const input = morphemes([
+      adjective('痛', '痛い', 'ガル接続'),
+      raw('がる', '動詞', { posDetail1: '接尾', baseForm: 'がる', conjugationType: '五段・ラ行', conjugatedForm: '基本形' }),
+    ]);
+    const result = parseModernMorphemes(input);
+    expect(result.bunsetsu[0]?.tango[0]).toMatchObject({
+      surface: '痛がる', baseForm: '痛がる', hinshi: '動詞', katsuyouType: '五段', katsuyoukei: '終止形',
+    });
+    expect(result.bunsetsu[0]?.tango[0]?.rawMorphemes).toEqual(input);
+  });
+
+  it('removes host conjugation and the inflected stem from 高さ', () => {
+    const result = parseModernMorphemes(morphemes([adjective('高', '高い', 'ガル接続'), suffix('さ', '特殊')]));
+    const token = result.bunsetsu[0]?.tango[0];
+    expect(token).toMatchObject({ surface: '高さ', baseForm: '高さ', hinshi: '名詞' });
+    expect(token?.katsuyouType).toBeUndefined();
+    expect(token?.katsuyoukei).toBeUndefined();
+  });
+});
+
 describe('normalization boundaries and source preservation', () => {
   it('does not merge a noun with an unrelated に', () => {
     const result = parseModernMorphemes(morphemes([noun('学校'), particle('に', '格助詞'), verb('行く', '行く', '五段・カ行促音便', '基本形')]));
@@ -87,9 +209,10 @@ describe('normalization boundaries and source preservation', () => {
     expect(result.bunsetsu[0]?.tango[1]).toMatchObject({ surface: 'に', hinshi: '助詞', subHinshi: '格助詞' });
   });
 
-  it('keeps 同じだ as a 連体詞 plus 助動詞', () => {
+  it('reconstructs 同じだ as one 形容動詞', () => {
     const result = parseModernMorphemes(morphemes([raw('同じ', '連体詞'), da()]));
-    expect(result.bunsetsu[0]?.tango.map((t) => [t.surface, t.hinshi])).toEqual([['同じ', '連体詞'], ['だ', '助動詞']]);
+    expect(result.bunsetsu[0]?.tango.map((t) => [t.surface, t.hinshi])).toEqual([['同じだ', '形容動詞']]);
+    expect(result.bunsetsu[0]?.tango[0]).toMatchObject({ baseForm: '同じだ', katsuyoukei: '終止形' });
   });
 
   it('retains all raw morphemes and offsets through a merge', () => {
@@ -106,10 +229,24 @@ describe('normalization boundaries and source preservation', () => {
     expect(result.text).toBe('おは水');
   });
 
-  it('reports an orphan suffix without dropping it', () => {
-    const result = parseModernMorphemes(morphemes([particle('は', '係助詞'), suffix('さ')]));
+  it('reports an orphan suffix without dropping it or creating an independent noun', () => {
+    const input = morphemes([particle('は', '係助詞'), suffix('さ')]);
+    const result = parseModernMorphemes(input);
     expect(result.diagnostics.some((d) => d.code === 'MODERN_NORMALIZE_ORPHAN_SUFFIX')).toBe(true);
-    expect(result.bunsetsu.flatMap((b) => b.tango).map((t) => t.surface)).toEqual(['は', 'さ']);
+    expect(result.bunsetsu.flatMap((b) => b.tango).map((t) => [t.surface, t.hinshi, t.isIndependent])).toEqual([
+      ['は', '助詞', false], ['さ', '接尾詞', false],
+    ]);
+    expect(result.bunsetsu.flatMap((b) => b.tango).flatMap((t) => t.rawMorphemes ?? [])).toEqual(input);
+  });
+
+  it('preserves an orphan prefix as dependent without inventing a noun', () => {
+    const result = parseModernMorphemes(morphemes([prefix('お'), particle('は', '係助詞')]));
+    expect(result.bunsetsu.flatMap((b) => b.tango).map((t) => [t.surface, t.hinshi, t.isIndependent])).toEqual([
+      ['お', '接頭詞', false], ['は', '助詞', false],
+    ]);
+    expect(result.diagnostics.map((d) => d.code)).toEqual([
+      'MODERN_NORMALIZE_ORPHAN_PREFIX', 'MODERN_BUNSETSU_LEADING_DEPENDENT',
+    ]);
   });
 
   it('keeps sentence-initial dependent words best-effort', () => {
@@ -154,15 +291,22 @@ describe('normalization boundaries and source preservation', () => {
     expect(result.diagnostics[0]?.code).toBe('MODERN_INPUT_NOT_ARRAY');
   });
 
-  it('keeps punctuation as a best-effort token without a POS warning', () => {
+  it('keeps an IPAdic filler separate from a following suffix', () => {
+    const result = parseModernMorphemes(morphemes([raw('ええと', 'フィラー'), suffix('さ')]));
+    expect(result.bunsetsu.flatMap((b) => b.tango).map((t) => t.hinshi)).toEqual(['感動詞', '接尾詞']);
+    expect(result.bunsetsu.flatMap((b) => b.tango).map((t) => t.surface)).toEqual(['ええと', 'さ']);
+    expect(result.diagnostics.some((d) => d.code === 'MODERN_NORMALIZE_ORPHAN_SUFFIX')).toBe(true);
+  });
+
+  it('keeps punctuation as an independent 記号 token without a POS warning', () => {
     const result = parseModernMorphemes(morphemes([noun('本'), symbol('。')]));
     expect(result.text).toBe('本。');
     expect(result.bunsetsu[1]?.tango[0]).toMatchObject({
       surface: '。',
-      hinshi: '名詞',
-      subHinshi: '記号',
+      hinshi: '記号',
       isIndependent: true,
     });
+    expect(result.bunsetsu[1]?.tango[0]?.subHinshi).toBeUndefined();
     expect(result.diagnostics.some((d) => d.code === 'MODERN_POS_UNSUPPORTED')).toBe(false);
   });
 });

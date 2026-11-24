@@ -15,6 +15,7 @@ import type { Bunsetsu, Tango } from '@callieniera/fushi/core';
 export const COMPONENT_LABELS = ['主語', '述語', '修飾語', '接続語', '独立語'] as const;
 export const HINSHI_LABELS: readonly Hinshi[] = [
   '動詞', '形容詞', '形容動詞', '名詞', '副詞', '連体詞', '接続詞', '感動詞', '助動詞', '助詞',
+  '接頭詞', '接尾詞', '記号',
 ];
 
 function object(value: unknown): value is Record<string, unknown> {
@@ -97,7 +98,8 @@ function validatePassage(value: unknown, index: number, issues: ContentIssue[]):
       if (typeof token.surface === 'string' && (result.text as string).slice(token.start, token.end) !== token.surface) {
         issues.push({ path: tangoPath, message: 'Surface text does not match the source span.' });
       }
-      if (token.isIndependent === (token.hinshi === '助詞' || token.hinshi === '助動詞')) {
+      if (token.isIndependent === (token.hinshi === '助詞' || token.hinshi === '助動詞' ||
+        token.hinshi === '接頭詞' || token.hinshi === '接尾詞')) {
         issues.push({ path: tangoPath, message: 'Independent/supporting classification is inconsistent.' });
       }
       expectedTangoStart = token.end;

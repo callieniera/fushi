@@ -28,7 +28,7 @@ const cases: DistinctionCase[] = [
   { name: '形容動詞連用形＋ない', input: [naStem('静か'), da('で', '連用形'), raw('ない', '形容詞', { posDetail1: '自立', baseForm: 'ない', conjugationType: '形容詞・アウオ段', conjugatedForm: '基本形' })], surface: 'ない', hinshi: '形容詞', independent: true },
   { name: '静かではない', input: [naStem('静か'), da('で', '連用形'), particle('は', '係助詞'), raw('ない', '形容詞', { posDetail1: '自立', baseForm: 'ない', conjugationType: '形容詞・アウオ段', conjugatedForm: '基本形' })], surface: 'ない', hinshi: '形容詞', independent: true },
   { name: '行かなくはない', input: [verb('行か', '行く', '五段・カ行促音便', '未然形'), auxiliary('なく', '特殊・ナイ', '連用テ接続', 'ない'), particle('は', '係助詞'), raw('ない', '形容詞', { posDetail1: '自立', baseForm: 'ない', conjugationType: '形容詞・アウオ段', conjugatedForm: '基本形' })], surface: 'ない', hinshi: '形容詞', independent: true },
-  { name: 'お金がない', input: [noun('お金'), particle('が', '格助詞'), adjective('ない', 'ない')], surface: 'ない', hinshi: '形容詞', independent: true },
+  { name: 'お金がない', input: [noun('お金'), particle('が', '格助詞'), adjective('ない', 'ない')], surface: 'ない', hinshi: '形容詞', subHinshi: '自立', independent: true },
   { name: '雨が降りそう', input: [noun('雨'), particle('が', '格助詞'), verb('降り', '降りる', '一段', '連用形'), raw('そう', '名詞', { posDetail1: '接尾', posDetail2: '助動詞語幹' }), da()], surface: 'そうだ', hinshi: '助動詞', subHinshi: '様態', independent: false },
   { name: 'おいしそう', input: [adjective('おいし', 'おいしい', '連用形'), raw('そう', '名詞', { posDetail1: '接尾', posDetail2: '助動詞語幹' }), da()], surface: 'そうだ', hinshi: '助動詞', subHinshi: '様態' },
   { name: '静かそう', input: [naStem('静か'), raw('そう', '名詞', { posDetail1: '接尾', posDetail2: '助動詞語幹' }), da()], surface: 'そうだ', hinshi: '助動詞', subHinshi: '様態' },
@@ -41,6 +41,10 @@ const cases: DistinctionCase[] = [
   { name: '私の本', input: [noun('私', '代名詞'), particle('の', '連体化'), noun('本')], surface: 'の', hinshi: '助詞', subHinshi: '格助詞' },
   { name: '東京の空', input: [noun('東京'), particle('の', '連体化'), noun('空')], surface: 'の', hinshi: '助詞', subHinshi: '格助詞' },
   { name: '赤いの', input: [adjective('赤い', '赤い'), particle('の', '名詞化')], surface: 'の', hinshi: '助詞', subHinshi: '準体助詞' },
+  { name: '実辞典の名詞化の', input: [adjective('赤い', '赤い'), raw('の', '名詞', { posDetail1: '非自立', baseForm: 'の' }), particle('を', '格助詞')], surface: 'の', hinshi: '助詞', subHinshi: '準体助詞', independent: false },
+  { name: '不定称のか', input: [noun('誰', '代名詞'), particle('か', '副助詞／並立助詞／終助詞'), verb('来', '来る', 'カ変・来ル', '連用形'), auxiliary('た', '特殊・タ')], surface: 'か', hinshi: '助詞', subHinshi: '副助詞', independent: false },
+  { name: '疑問のか', input: [verb('行く', '行く', '五段・カ行促音便', '基本形'), particle('か', '副助詞／並立助詞／終助詞'), symbol('。')], surface: 'か', hinshi: '助詞', subHinshi: '終助詞', independent: false },
+  { name: '並立のか', input: [verb('行く', '行く', '五段・カ行促音便', '基本形'), particle('か', '副助詞／並立助詞／終助詞'), verb('帰る', '帰る', '五段・ラ行', '基本形'), particle('か', '副助詞／並立助詞／終助詞')], surface: 'か', hinshi: '助詞', subHinshi: '並立助詞', independent: false },
   { name: '私の', input: [noun('私', '代名詞'), particle('の', '名詞化')], surface: 'の', hinshi: '助詞', subHinshi: '準体助詞' },
   { name: '行くの', input: [verb('行く', '行く', '五段・カ行促音便', '基本形'), particle('の', '終助詞')], surface: 'の', hinshi: '助詞', subHinshi: '終助詞' },
   { name: '行くの？', input: [verb('行く', '行く', '五段・カ行促音便', '基本形'), particle('の', '終助詞'), symbol('？')], surface: 'の', hinshi: '助詞', subHinshi: '終助詞' },
@@ -60,6 +64,22 @@ const cases: DistinctionCase[] = [
   { name: 'れる連体形', input: [verb('読ま', '読む', '五段・マ行', '未然形'), auxiliary('れる', '一段', '基本形'), noun('本')], surface: 'れる', hinshi: '助動詞', form: '連体形', diagnostic: 'MODERN_RERU_AMBIGUOUS' },
   { name: 'れる仮定形', input: [verb('読ま', '読む', '五段・マ行', '未然形'), auxiliary('れれ', '一段', '仮定形', 'れる')], surface: 'れれ', hinshi: '助動詞', form: '仮定形' },
 ];
+
+describe('local あの modification', () => {
+  it('does not let a later noun across an adverb turn hesitation あの into 連体詞', () => {
+    const result = parseModernMorphemes(morphemes([
+      raw('あの', 'フィラー'), raw('もう', '副詞', { posDetail1: '一般' }), noun('本'),
+    ]));
+    expect(result.bunsetsu[0]?.tango[0]).toMatchObject({ surface: 'あの', hinshi: '感動詞' });
+  });
+
+  it('retains 連体詞 for a locally connected attributive chain', () => {
+    const result = parseModernMorphemes(morphemes([
+      raw('あの', 'フィラー'), naStem('静か'), da('な', '体言接続'), noun('家'),
+    ]));
+    expect(result.bunsetsu[0]?.tango[0]).toMatchObject({ surface: 'あの', hinshi: '連体詞' });
+  });
+});
 
 describe('identical-surface grammar distinctions', () => {
   it.each(cases)('$name', ({ input, surface, hinshi, subHinshi, form, type, independent, diagnostic }) => {
