@@ -90,8 +90,14 @@ function isClausePredicate(bunsetsu: Bunsetsu): boolean {
   if (!head || (!CONJUGATING_HEADS.includes(head.hinshi)
     && !(head.hinshi === '名詞' && hasCopula(bunsetsu)))) return false;
   const particle = conjunctiveParticleOf(bunsetsu);
-  return particle !== undefined || head.subHinshi !== '補助動詞'
-    && effectiveConjugationForm(bunsetsu) === '連体形';
+  // Only verbs (動詞) can form relative clauses via 連体形.
+  // I-adjectives (形容詞) and na-adjectives (形容動詞) in 連体形 are simple adnominal modifiers (連体修飾語), not relative clauses.
+  const isVerbInAttributive = head.hinshi === '動詞' && effectiveConjugationForm(bunsetsu) === '連体形';
+  // For relative clauses (連体修飾節), subsidiary verbs (補助動詞) CAN be predicates
+  // (e.g., "走っている" where "いる" is the predicate in 連体形).
+  // For adverbial clauses (接続節) and main clauses, subsidiary verbs cannot be predicates.
+  // The particle check handles adverbial/main clauses; the attributive check handles relative clauses.
+  return particle !== undefined || isVerbInAttributive;
 }
 
 function hasPurposeMotionTarget(bunsetsu: Bunsetsu | undefined): boolean {
@@ -245,7 +251,8 @@ function discoverClauses(
     }
 
     if (effectiveConjugationForm(item) !== '連体形' || !isRelativeHeadCandidate(next)) continue;
-    for (let start = 0; start < predicateIndex; start += 1) {
+    // Include start = predicateIndex to handle relative clauses at the beginning of the sentence
+    for (let start = 0; start <= predicateIndex; start += 1) {
       discoveries.push({
         start,
         end: predicateIndex,
@@ -733,6 +740,20 @@ function analyzeDiscoveredClauses(
       }
     } else {
       roles.set(item.predicateIndex, '述語');
+      // For relative clauses (連体修飾節) with subsidiary relations,
+      // assign the non-predicate members as modifiers within the clause
+      if (item.kind === '連体修飾節') {
+        const predicateIndexes = subsidiaryMembers(subsidiaryRelations, item.predicateIndex) ?? [item.predicateIndex];
+        for (const member of item.bunsetsuIndexes) {
+          if (!predicateIndexes.includes(member) && bunsetsu[member]!.sentenceComponent === undefined) {
+            bunsetsu[member]!.sentenceComponent = '修飾語';
+            bunsetsu[member]!.modifierKind = '連体修飾語';
+          }
+        }
+        // For the renbunsetsu, the role should be '修飾語' for the whole group
+        // since the relative clause as a whole modifies the target
+        roles.set(item.predicateIndex, '修飾語');
+      }
     }
   }
   const renbunsetsu = buildRenbunsetsu(bunsetsu, subsidiaryRelations, roles);

@@ -43,6 +43,18 @@ const cases: PosCase[] = [
   { name: '形式名詞', input: [verb('読む', '読む', '五段・マ行', '基本形'), noun('こと', '非自立')], hinshi: '名詞', independent: true },
   { name: '副詞', input: [raw('ゆっくり', '副詞', { posDetail1: '一般' })], hinshi: '副詞', independent: true },
   { name: '連体詞', input: [raw('この', '連体詞'), noun('本')], hinshi: '連体詞', independent: true },
+  { name: 'フィラーとしてのあの', input: [raw('あの', 'フィラー')], hinshi: '感動詞', independent: true },
+  { name: '名詞を修飾するフィラーあの', input: [raw('あの', 'フィラー'), noun('本')], hinshi: '連体詞', independent: true },
+  { name: '記号の前にあるあの', input: [raw('あの', 'フィラー'), raw('。', '記号')], hinshi: '感動詞', independent: true },
+  { name: '連体詞タグでも記号の前にあるあの', input: [raw('あの', '連体詞'), raw('、', '記号')], hinshi: '感動詞', independent: true },
+  { name: '数詞を修飾するあの', input: [raw('あの', 'フィラー'), raw('三', '名詞', { posDetail1: '数' }), noun('人')], hinshi: '連体詞', independent: true },
+  { name: '接頭詞を修飾するあの', input: [raw('あの', 'フィラー'), raw('大', '接頭詞', { posDetail1: '名詞接続' }), noun('人')], hinshi: '連体詞', independent: true },
+  { name: '形容詞を修飾するあの', input: [raw('あの', 'フィラー'), adjective('白い', '白い', '連体形'), noun('建物')], hinshi: '連体詞', independent: true },
+  { name: '動詞連体形を修飾するあの', input: [raw('あの', 'フィラー'), verb('読む', '読む', '五段・マ行', '連体形'), noun('本')], hinshi: '連体詞', independent: true },
+  { name: '助動詞連体形を修飾するあの', input: [raw('あの', 'フィラー'), auxiliary('たい', '特殊・タイ', '連体形'), noun('本')], hinshi: '連体詞', independent: true },
+  { name: '文法的に不自然なあの（体言なし）', input: [raw('あの', 'フィラー'), raw('しかし', '接続詞')], hinshi: '感動詞', independent: true },
+  { name: 'あのさ（フィラー＋終助詞）', input: [raw('あの', 'フィラー'), raw('さ', '助詞', { posDetail1: '終助詞' })], hinshi: '感動詞', independent: true },
+  { name: 'あのさ！（フィラー＋終助詞＋記号）', input: [raw('あの', 'フィラー'), raw('さ', '名詞', { posDetail1: '接尾', posDetail2: '特殊' }), raw('！', '記号')], hinshi: '感動詞', independent: true },
   { name: '接続詞', input: [raw('しかし', '接続詞')], hinshi: '接続詞', independent: true },
   { name: '感動詞', input: [raw('こんにちは', '感動詞')], hinshi: '感動詞', independent: true },
   { name: '格助詞', input: [noun('本'), particle('を', '格助詞')], hinshi: '助詞', independent: false },
@@ -68,5 +80,8 @@ describe('ten school-grammar parts of speech and six conjugation bases', () => {
     expect(target).toMatchObject({ hinshi, isIndependent: independent });
     if (form) expect(target?.katsuyoukei).toBe(form);
     if (type) expect(target?.katsuyouType).toBe(type);
+    if (input.some((item) => item.pos === 'フィラー')) {
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === 'MODERN_POS_UNSUPPORTED')).toBe(false);
+    }
   });
 });

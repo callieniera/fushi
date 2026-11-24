@@ -1,7 +1,6 @@
 import type { ParseResult, Tango } from '@callieniera/fushi/core';
 import { annotatedText, tokenDetails } from '../components/annotated-text.js';
 import { reviewSuggestions } from '../components/review-suggestions.js';
-import { sentenceAnalysis } from '../components/sentence-analysis.js';
 import { button, element } from '../lib/dom.js';
 import { ModernSandbox } from '../lib/fushi-client.js';
 import type { AnnotatedPassage, Curriculum } from '../content/schema.js';
@@ -13,7 +12,9 @@ export function sandboxView(sandbox = new ModernSandbox(), language: Language = 
   const section = element('section', { attributes: { 'aria-labelledby': 'sandbox-title' } });
   section.append(element('p', { className: 'eyebrow', text: t('sandboxEyebrow') }), element('h2', { id: 'sandbox-title', text: t('sandboxTitle') }));
   const notice = element('div', { className: 'notice warning' });
-  notice.append(element('h3', { text: t('sandboxWarningTitle') }), element('p', { text: t('sandboxWarning') }));
+  const scopeNotice = element('p', { text: t('sandboxWarning') });
+  scopeNotice.append(' ', element('a', { text: t('analysisScopeLink'), attributes: { href: '#/analysis-scope' } }));
+  notice.append(element('h3', { text: t('sandboxWarningTitle') }), scopeNotice);
   section.append(notice);
   const form = element('form', { className: 'sandbox-form' });
   const label = element('label', { text: t('sandboxInput'), attributes: { for: 'sandbox-input' } });
@@ -80,19 +81,8 @@ export function sandboxView(sandbox = new ModernSandbox(), language: Language = 
       element('p', { text: t('inspectWord') }),
       details,
     );
-    const sentenceDiagnostics = result.diagnostics.filter((issue) => issue.code.startsWith('MODERN_COMPONENT_'));
-    const primaryReview = reviewSuggestions(result, language,
-      result.diagnostics.filter((issue) => !issue.code.startsWith('MODERN_COMPONENT_')));
-    if (primaryReview) output.append(primaryReview);
-    const experimental = element('details', { className: 'experimental-analysis' });
-    experimental.append(
-      element('summary', { text: t('experimentalAnalysisTitle') }),
-      element('p', { className: 'analysis-help', text: t('experimentalAnalysisHelp') }),
-      sentenceAnalysis(result, language),
-    );
-    const experimentalReview = reviewSuggestions(result, language, sentenceDiagnostics);
-    if (experimentalReview) experimental.append(experimentalReview);
-    output.append(experimental);
+    const review = reviewSuggestions(result, language);
+    if (review) output.append(review);
   }
 
   form.addEventListener('submit', (event) => {

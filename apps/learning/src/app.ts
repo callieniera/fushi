@@ -4,6 +4,7 @@ import { button, element } from './lib/dom.js';
 import { ModernSandbox } from './lib/fushi-client.js';
 import { SentencePool } from './lib/sentence-pool.js';
 import { aboutView } from './modes/about.js';
+import { analysisScopeView } from './modes/analysis-scope.js';
 import { drillsView } from './modes/drills.js';
 import { lessonsView } from './modes/lessons.js';
 import { lessonView } from './modes/lesson-view.js';
@@ -84,6 +85,7 @@ export function appView(content: Curriculum, progress: ProgressStore, sandbox = 
     }
     if (route.name === 'drills') return drillsView(content, progress, lang);
     if (route.name === 'sandbox') return sandboxView(sandbox, lang, content, pool);
+    if (route.name === 'analysis-scope') return analysisScopeView(lang);
     if (route.name === 'about') return aboutView(lang);
     return notFound(lang);
   }
@@ -104,6 +106,7 @@ function routeTitle(route: Route, lang: 'en' | 'ja'): string {
   if (route.name === 'lessons') return text(lang, 'lessons');
   if (route.name === 'drills') return text(lang, 'drills');
   if (route.name === 'sandbox') return text(lang, 'sandbox');
+  if (route.name === 'analysis-scope') return text(lang, 'analysisScopeTitle');
   if (route.name === 'about') return text(lang, 'about');
   return text(lang, 'notFound');
 }

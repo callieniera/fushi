@@ -6,12 +6,15 @@ import { element } from '../lib/dom.js';
 export function aboutView(language: Language = 'en'): HTMLElement {
   const t = (key: Parameters<typeof text>[1]): string => text(language, key);
   const section = element('section', { className: 'about-page', attributes: { 'aria-labelledby': 'about-title' } });
+  const scopeLink = element('p');
+  scopeLink.append(element('a', { text: t('analysisScopeLink'), attributes: { href: '#/analysis-scope' } }));
   section.append(
     element('p', { className: 'eyebrow', text: t('aboutEyebrow') }),
     element('h2', { id: 'about-title', text: t('aboutTitle') }),
     element('p', { className: 'lede', text: t('aboutLede') }),
     element('h3', { text: t('aboutFeaturesTitle') }),
     element('p', { text: t('aboutFeaturesBody') }),
+    scopeLink,
     element('h3', { text: t('aboutProjectTitle') }),
     element('p', { text: t('aboutProjectBody') }),
     element('p'),

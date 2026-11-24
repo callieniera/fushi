@@ -129,24 +129,19 @@ Fushi can also record warnings when it encounters an unfamiliar word type or can
 
 Fushi's bunsetsu grouping follows clear rules. It does not use artificial intelligence to understand the meaning of the whole sentence.
 
-Fushi can identify **some basic grammatical relationships** between bunsetsu. For example, given:
+The supported modern library stops after forming ordinary 文節. It does **not** generate sentence components（文の成分）, dependency targets（係り受け）, clauses（節）, sentence types（単文・複文・重文）, or combined phrase segments（連文節）. For example, it returns `私は｜本を｜読む` without deciding which segment is the subject or which segment modifies another.
 
-> **私は｜本を｜読む**
+This boundary is deliberate. Local word patterns often provide useful 文節 boundaries, but sentence-level decisions can require omitted information, broader context, semantics, and discourse. Kuromoji/IPAdic supplies morphological features rather than a complete dependency tree. Finite exception rules cannot guarantee broadly accurate sentence analysis.
 
-it can label **私は** as the subject, **本を** as a modifier, and **読む** as the predicate. It can also record that **私は** is the subject of **読む** and that **本を** modifies **読む**. For some sentences, it can recognize connective, relative, and coordinate clauses as well. These sentence-level results are experimental; the sandbox shows 単語・文節 first and puts sentence analysis in a collapsed section.
+That does not mean Japanese sentence analysis is impossible. Learned parsing models and evaluated linguistic resources are different approaches outside this library's current scope. The former experiment is preserved as reference-only source in [`experimental/sentence-analysis`](./experimental/sentence-analysis/); it is not part of the supported API.
 
-For selected `[動詞＋て／で]＋[補助動詞]` patterns, Fushi can also form a **combined phrase segment（連文節）** with a **subsidiary relation（補助の関係）**. For example, `降って｜いるので` remain two 文節 but together form `降っているので`. In a **connective clause（接続節）**, that expression has an internal predicate but functions as a **connective（接続語）** at sentence level. The grouped representation keeps those levels separate.
-
-However, this is **best-effort analysis, not a complete grammatical tree or a full understanding of the sentence**. Fushi does not guess omitted or shared subjects, unclear modifier targets, or unsupported clause boundaries. Standalone temporal nouns marked `副詞可能` and purpose expressions such as `見に` before supported motion predicates are recognized as **連用修飾語**. A recognizable modifier can retain its **修飾語** component and **連体修飾語／連用修飾語** subtype even when its target is undetermined; Fushi then records a warning without creating a relationship. Quotation and complement clauses, nested relative clauses, general phrase-segment combination (**連文節**) beyond explicit subsidiary relations, general 主語節・述語節・連用修飾節 recognition, and unrestricted semantic relationships remain outside its analysis.
-
-When Fushi cannot determine a role or relationship confidently, it leaves that information out and records a warning. A missing label or relationship therefore does not prove that none exists.
-
-The quality of the result depends on:
+The quality of the word and 文節 result still depends on:
 
 1. Kuromoji's initial division of the sentence.
 2. Fushi's rules for combining word pieces.
 3. Fushi's decisions about which words are independent or dependent.
-4. Whether the sentence contains relationships and clause structures that Fushi supports.
+
+These results remain best-effort; limiting the scope does not make tokenization or 文節 grouping perfect.
 
 ## In one sentence
 

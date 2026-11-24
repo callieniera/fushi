@@ -192,6 +192,27 @@ describe('bunsetsu grouping and interacting rules', () => {
     expect(result.bunsetsu[0]?.tango[0]?.rawMorphemes).toHaveLength(2);
     expect(result.bunsetsu[1]?.tango[0]?.rawMorphemes).toHaveLength(2);
   });
+
+  it('stops at ordinary bunsetsu without sentence-level analysis', () => {
+    const result = parseModernMorphemes(morphemes([
+      noun('雨'), particle('が', '格助詞'),
+      verb('降っ', '降る', '五段・ラ行', '連用タ接続'), particle('て', '接続助詞'),
+      verb('いる', 'いる', '一段', '基本形', '非自立'), particle('ので', '接続助詞'),
+      noun('傘'), particle('を', '格助詞'),
+      verb('持っ', '持つ', '五段・タ行', '連用タ接続'), particle('て', '接続助詞'),
+      verb('行き', '行く', '五段・カ行促音便', '連用形', '非自立'),
+      auxiliary('ましょ', '特殊・マス', '未然ウ接続', 'ます'), auxiliary('う', '不変化型', '基本形', 'う'),
+    ]));
+    expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
+      .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう']);
+    expect(result).toEqual({
+      mode: 'modern',
+      text: '雨が降っているので傘を持って行きましょう',
+      bunsetsu: result.bunsetsu,
+      diagnostics: [],
+    });
+    expect(result.bunsetsu.every((item) => Object.keys(item).sort().join(',') === 'end,id,start,tango')).toBe(true);
+  });
 });
 
 describe('overlapping normalization precedence', () => {

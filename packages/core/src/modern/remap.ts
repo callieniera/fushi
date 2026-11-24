@@ -152,7 +152,7 @@ function mapHinshi(token: NormalizedToken): Hinshi | undefined {
   if (pos === '名詞' && token.source.raw.posDetail1 === '形容動詞語幹') return '名詞';
   if (pos === '名詞' && token.source.raw.posDetail2 === '助動詞語幹') return '助動詞';
   if (pos === '動詞' || pos === '形容詞' || pos === '名詞' || pos === '副詞' || pos === '連体詞' ||
-      pos === '接続詞' || pos === '感動詞' || pos === '助動詞' || pos === '助詞') return pos;
+    pos === '接続詞' || pos === '感動詞' || pos === '助動詞' || pos === '助詞') return pos;
   return undefined;
 }
 
@@ -267,7 +267,7 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
     }
 
     if (raw.pos === '助動詞' && (raw.baseForm === 'れる' || raw.baseForm === 'られる' ||
-        raw.surface === 'れる' || raw.surface === 'られる')) {
+      raw.surface === 'れる' || raw.surface === 'られる')) {
       hinshi = '助動詞';
       independent = false;
       subHinshi = '受身・自発・可能・尊敬';
@@ -286,7 +286,7 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
     }
 
     if (raw.surface === 'に' && raw.pos === '助詞' &&
-        (raw.posDetail1 === '副詞化' || isNiConjunctiveContext(tokens, index))) {
+      (raw.posDetail1 === '副詞化' || isNiConjunctiveContext(tokens, index))) {
       subHinshi = '接続助詞';
     }
 
@@ -298,15 +298,72 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
       else subHinshi = '準体助詞';
     }
 
+    if (raw.surface === 'あの' && (raw.pos === 'フィラー' || raw.pos === '連体詞')) {
+      const next = tokens[index + 1]?.source.raw;
+      // Special case: あのさ (filler + 終助詞) -> 感動詞 + 終助詞
+      // kuromoji may tokenize さ as either 助詞/終助詞 or 名詞/接尾/特殊 depending on following punctuation
+      const isSaParticle = next?.surface === 'さ' &&
+        ((next?.pos === '助詞' && next?.posDetail1 === '終助詞') ||
+          (next?.pos === '名詞' && next?.posDetail1 === '接尾' && next?.posDetail2 === '特殊'));
+      if (isSaParticle) {
+        hinshi = '感動詞';
+        subHinshi = undefined;
+        independent = true;
+      }
+      // First priority: next is 記号 or end of sentence -> 感動詞
+      else if (!next || next.pos === '記号') {
+        hinshi = '感動詞';
+        subHinshi = undefined;
+        independent = true;
+      } else {
+        // Check if there's any 体言 (noun-like) after あの in the remaining tokens
+        const hasTaigenAfter = tokens.slice(index + 1).some((t) => {
+          const r = t.source.raw;
+          const c = t.conjugationSource.raw;
+          return r.pos === '名詞' ||
+            r.pos === '数詞' ||
+            (r.pos === '接頭詞' && r.posDetail1 === '名詞接続') ||
+            (r.pos === '動詞' && (c?.conjugatedForm === '体言接続' || c?.conjugatedForm === '連体形')) ||
+            (r.pos === '形容詞' && (c?.conjugatedForm === '体言接続' || c?.conjugatedForm === '連体形')) ||
+            (r.pos === '助動詞' && (c?.conjugatedForm === '体言接続' || c?.conjugatedForm === '連体形'));
+        });
+        if (hasTaigenAfter) {
+          hinshi = '連体詞';
+          subHinshi = undefined;
+          independent = true;
+        } else {
+          // Grammar likely wrong, but default to 感動詞 as it's the more likely interpretation in isolation
+          hinshi = '感動詞';
+          subHinshi = undefined;
+          independent = true;
+        }
+      }
+    }
+
+    // Special case: さ after あの (あのさ filler expression)
+    // kuromoji may tokenize さ as 名詞/接尾/特殊 when followed by punctuation like ！
+    if (raw.surface === 'さ' && raw.pos === '名詞' && raw.posDetail1 === '接尾' && raw.posDetail2 === '特殊') {
+      const prev = tokens[index - 1]?.source.raw;
+      if (prev?.surface === 'あの' && prev?.pos === 'フィラー') {
+        hinshi = '助詞';
+        subHinshi = '終助詞';
+        independent = false;
+      }
+    }
+
     if (katsuyoukei === '終止形' && isAttributiveContext(tokens, index) &&
-        (hinshi === '動詞' || hinshi === '形容詞' || hinshi === '助動詞')) {
+      (hinshi === '動詞' || hinshi === '形容詞' || hinshi === '助動詞')) {
       katsuyoukei = '連体形';
     } else if (katsuyoukei === '連体形' && isTerminalContext(tokens, index) &&
-        (hinshi === '動詞' || hinshi === '形容詞' || hinshi === '助動詞')) {
+      (hinshi === '動詞' || hinshi === '形容詞' || hinshi === '助動詞')) {
       katsuyoukei = '終止形';
     }
 
-    if (!hinshi) {
+    if (!hinshi && raw.pos === '記号') {
+      hinshi = '名詞';
+      subHinshi = '記号';
+      independent = true;
+    } else if (!hinshi) {
       hinshi = '名詞';
       subHinshi = raw.pos || '未知';
       independent = true;

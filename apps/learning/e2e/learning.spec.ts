@@ -143,6 +143,43 @@ test('about page introduces Fushi and includes the project and dictionary licens
   expect(widths.content).toBeLessThanOrEqual(widths.viewport);
 });
 
+test('analysis scope routes directly and links from explorer and About without dictionary requests', async ({ page }) => {
+  const dictionaryRequests: string[] = [];
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('request', (request) => { if (request.url().includes('/dictionaries/kuromoji/')) dictionaryRequests.push(request.url()); });
+  await page.goto('/#/analysis-scope');
+  await expect(page.getByRole('heading', { name: 'What Fushi analyzes', exact: true })).toBeVisible();
+  await expect(page).toHaveTitle('What Fushi analyzes — Fushi');
+  await expect(page.getByRole('heading', { name: 'Why full sentence grammar is not promised' })).toBeVisible();
+  await expect(page.getByText('High-accuracy Japanese sentence analysis is not theoretically impossible.', { exact: false })).toBeVisible();
+  await expect(page.locator('nav').getByRole('link', { name: 'What Fushi analyzes' })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Study sentence components' }).click();
+  await expect(page.getByRole('heading', { name: /Sentence components/ })).toBeVisible();
+  await page.goto('/#/sandbox');
+  await page.getByRole('link', { name: 'What the sentence explorer can and cannot analyze' }).click();
+  await expect(page.getByRole('heading', { name: 'What Fushi analyzes', exact: true })).toBeVisible();
+  await page.locator('footer').getByRole('link', { name: 'About Fushi, project link, and licenses' }).click();
+  await page.getByRole('link', { name: 'What the sentence explorer can and cannot analyze' }).click();
+  await expect(page.getByRole('heading', { name: 'What Fushi analyzes', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Switch to Japanese', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Fushiが解析するもの', exact: true })).toBeVisible();
+  await expect(page).toHaveTitle('Fushiが解析するもの — Fushi');
+  await expect(page.getByRole('heading', { name: '文全体の文法解析を保証しない理由' })).toBeVisible();
+  await expect(page.getByText('高精度な日本語文解析が理論上不可能というわけではありません。', { exact: false })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Fushiが解析するもの', exact: true })).toBeVisible();
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.setViewportSize({ width: 320, height: 740 });
+    const widths = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
+    expect(widths.content).toBeLessThanOrEqual(widths.viewport);
+    await expect(page.getByRole('heading', { name: 'Fushiが解析するもの', exact: true })).toBeVisible();
+  }
+  expect(dictionaryRequests).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
 test('old classical routes use the not-found view', async ({ page }) => {
   await page.goto('/#/classical');
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();

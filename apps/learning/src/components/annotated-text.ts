@@ -29,7 +29,6 @@ export function annotatedText(result: ParseResult, options: AnnotationOptions = 
       className: `bunsetsu${options.showBunsetsu === false ? ' no-boundary' : ''}`,
       attributes: { 'data-bunsetsu-id': bunsetsu.id },
     });
-    if (bunsetsu.sentenceComponent) phrase.dataset.component = bunsetsu.sentenceComponent;
     for (const tango of bunsetsu.tango) {
       const content = options.onSelect
         ? element('button', { text: tango.surface, attributes: { type: 'button', 'aria-pressed': String(options.selectedTangoId === tango.id) } })

@@ -51,7 +51,7 @@ describe('real kuromoji dictionary integration', () => {
     ]);
   });
 
-  it('resolves real-dictionary 複文 and 重文 into clause-scoped components', async () => {
+  it('maps 連体詞 uses and hesitation uses of あの to school grammar', async () => {
     const kuromoji = await import('kuromoji');
     const tokenizer = await new Promise<import('kuromoji').Tokenizer<IpadicFeatures>>((resolve, reject) => {
       kuromoji.builder({ dicPath: dictionaryRoot }).build((error, result) => {
@@ -59,26 +59,52 @@ describe('real kuromoji dictionary integration', () => {
         else resolve(result);
       });
     });
-    for (const text of [
-      '雨が降ったので、私は家に帰った',
-      '私は雨が降ったので家に帰った',
-      '子どもが読んだ本を私は買った',
-      '私は本を読んで、弟はテレビを見た',
-    ]) {
+
+    const standalone = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize('あの'), 'あの'));
+    expect(standalone.bunsetsu[0]?.tango[0]).toMatchObject({ surface: 'あの', hinshi: '感動詞', isIndependent: true });
+    expect(standalone.diagnostics).toEqual([]);
+
+    const punctuated = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize('あの。'), 'あの。'));
+    expect(punctuated.bunsetsu[0]?.tango[0]).toMatchObject({ surface: 'あの', hinshi: '感動詞', isIndependent: true });
+    expect(punctuated.diagnostics).toEqual([]);
+
+    for (const text of ['あの、', 'あの？']) {
       const result = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize(text), text));
-      expect(result.clauses).toHaveLength(2);
-      expect(result.bunsetsu.filter((item) => item.sentenceComponent === '述語')).toHaveLength(2);
-      expect(result.diagnostics.map((issue) => issue.code)).not.toContain(
-        'MODERN_COMPONENT_PREDICATE_AMBIGUOUS',
-      );
-      const ids = new Set(result.bunsetsu.map((item) => item.id));
-      for (const item of result.bunsetsu) {
-        expect(item.sentenceRelations?.every((relation) => ids.has(relation.targetBunsetsuId))).not.toBe(false);
-      }
+      expect(result.bunsetsu[0]?.tango[0]).toMatchObject({ surface: 'あの', hinshi: '感動詞', isIndependent: true });
+      expect(result.diagnostics).toEqual([]);
     }
+
+    const attributive = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize('あの本'), 'あの本'));
+    expect(attributive.bunsetsu[0]?.tango[0]).toMatchObject({ surface: 'あの', hinshi: '連体詞', isIndependent: true });
+    expect(attributive.diagnostics).toEqual([]);
   });
 
-  it('groups real-dictionary subsidiary predicates in a 接続節 and main clause', async () => {
+  it('preserves real-dictionary words and bunsetsu across multi-clause input', async () => {
+    const kuromoji = await import('kuromoji');
+    const tokenizer = await new Promise<import('kuromoji').Tokenizer<IpadicFeatures>>((resolve, reject) => {
+      kuromoji.builder({ dicPath: dictionaryRoot }).build((error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      });
+    });
+    const text = '雨が降ったので、私は家に帰った';
+    const result = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize(text), text));
+    expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
+      .toEqual(['雨が', '降ったので', '、', '私は', '家に', '帰った']);
+    expect(result.bunsetsu[0]?.tango.map((tango) => tango.hinshi)).toEqual(['名詞', '助詞']);
+    expect(result.bunsetsu[1]?.tango[0]).toMatchObject({
+      surface: '降っ', baseForm: '降る', hinshi: '動詞', katsuyouType: '五段', katsuyoukei: '連用形',
+    });
+    expect(result.bunsetsu[5]?.tango[0]).toMatchObject({
+      surface: '帰っ', baseForm: '帰る', hinshi: '動詞', katsuyouType: '五段', katsuyoukei: '連用形',
+    });
+    expect(result.bunsetsu.map((item) => [item.start, item.end])).toEqual([
+      [0, 2], [2, 7], [7, 8], [8, 10], [10, 12], [12, 15],
+    ]);
+    expect(result.diagnostics.map((issue) => issue.code)).toEqual([]);
+  });
+
+  it('keeps real-dictionary subsidiary verbs as separate ordinary bunsetsu', async () => {
     const kuromoji = await import('kuromoji');
     const tokenizer = await new Promise<import('kuromoji').Tokenizer<IpadicFeatures>>((resolve, reject) => {
       kuromoji.builder({ dicPath: dictionaryRoot }).build((error, result) => {
@@ -90,24 +116,17 @@ describe('real kuromoji dictionary integration', () => {
     const result = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize(text), text));
     expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
       .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう']);
-    expect(result.clauses?.map((clause) => [clause.kind, clause.predicateBunsetsuIds])).toEqual([
-      ['接続節', ['modern-bunsetsu-1', 'modern-bunsetsu-2']],
-      ['主節', ['modern-bunsetsu-4', 'modern-bunsetsu-5']],
-    ]);
-    expect(result.renbunsetsu?.map((group) => [group.relation, group.sentenceComponent])).toEqual([
-      ['補助の関係', '接続語'], ['補助の関係', '述語'],
-    ]);
-    expect(result.sentenceType).toBe('複文');
-    expect(result.bunsetsu[3]?.modifierKind).toBe('連用修飾語');
-    expect(result.diagnostics.map((issue) => issue.code)).toEqual([
-      'MODERN_COMPONENT_SUBJECT_UNRESOLVED',
-    ]);
+    expect(result.bunsetsu[2]?.tango[0]).toMatchObject({
+      surface: 'いる', hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true,
+    });
+    expect(result.bunsetsu[5]?.tango[0]).toMatchObject({
+      surface: '行き', baseForm: '行く', hinshi: '動詞', subHinshi: '補助動詞', katsuyoukei: '連用形',
+    });
+    expect(result.diagnostics).toEqual([]);
     const punctuated = parseModernMorphemes(ipadicToRawMorphemes(tokenizer.tokenize(`${text}。`), `${text}。`));
-    expect(punctuated.clauses?.map((clause) => clause.predicateBunsetsuIds)).toEqual([
-      ['modern-bunsetsu-1', 'modern-bunsetsu-2'],
-      ['modern-bunsetsu-4', 'modern-bunsetsu-5'],
-    ]);
-    expect(punctuated.sentenceType).toBe('複文');
+    expect(punctuated.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
+      .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう', '。']);
+    expect(punctuated.diagnostics.map((issue) => issue.code)).toEqual([]);
   });
 
   it('ships only JavaScript, declarations, and source maps in dist', async () => {

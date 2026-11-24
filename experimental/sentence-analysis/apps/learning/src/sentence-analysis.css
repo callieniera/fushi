@@ -1,0 +1,33 @@
+/* Reference-only declarations removed from apps/learning/src/styles.css. */
+.experimental-analysis { border: 1px solid var(--line); border-radius: .6rem; padding: .8rem 1rem; background: var(--surface); }
+.experimental-analysis > summary { min-height: 44px; cursor: pointer; font-weight: 700; }
+.experimental-analysis[open] > summary { margin-block-end: .8rem; }
+.experimental-analysis .sentence-analysis, .experimental-analysis .review-suggestions { margin-block-start: 1rem; }
+.sentence-analysis, .review-suggestions { border: 1px solid var(--line); border-radius: .6rem; padding: 1rem 1.2rem; background: var(--surface); }
+.sentence-analysis > h3, .review-suggestions > h3 { margin-block: 0 1rem; }
+.sentence-analysis h4 { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-block: 1.5rem .3rem; }
+.sentence-analysis h5 { margin-block: 0 .4rem; font-size: 1rem; }
+.accuracy-badge { border: 1px solid #9a6900; border-radius: 1rem; padding: .15rem .5rem; background: var(--warning); color: var(--warning-ink); font-size: .75rem; font-weight: 700; }
+.analysis-help, .analysis-note, .review-intro { color: var(--muted); font-size: .9rem; margin-block: .3rem .8rem; }
+.component-list { display: grid; gap: .5rem; margin-block: 1rem; }
+.component-row { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(10rem, 1.5fr); gap: .5rem 1rem; align-items: baseline; padding-block-end: .5rem; border-block-end: 1px solid var(--line); }
+.component-row dt { font-size: 1.2rem; overflow-wrap: anywhere; }
+.component-row dd { margin: 0; }
+.component-label { font-weight: 700; color: var(--accent); }
+.component-label.unresolved { color: var(--muted); font-weight: 400; }
+.relation-list, .clause-list, .review-list { list-style: none; padding: 0; display: grid; gap: .7rem; }
+.relation-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .55rem; }
+.relation-phrase { font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
+.relation-arrow { color: var(--accent); }
+.relation-label { flex-basis: 100%; color: var(--muted); font-size: .85rem; padding-inline-start: .1rem; }
+.clause-item { border-inline-start: 3px solid var(--accent); padding: .3rem 0 .3rem 1rem; }
+.clause-item p { margin-block: .3rem; }
+.clause-text { font-size: 1.1rem; overflow-wrap: anywhere; }
+.clause-predicate, .clause-relations { color: var(--muted); font-size: .9rem; }
+.clause-relations { margin-block: .4rem; padding-inline-start: 1.2rem; }
+
+@media (max-width: 40rem) {
+  .sentence-analysis, .review-suggestions { padding: .8rem; }
+  .component-row { grid-template-columns: 1fr; gap: .1rem; }
+  .relation-label { flex-basis: auto; }
+}

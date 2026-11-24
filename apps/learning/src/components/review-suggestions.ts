@@ -18,12 +18,6 @@ const diagnosticMessages: Record<string, MessageKey> = {
   MODERN_POS_UNSUPPORTED: 'diagnosticPosUnsupported',
   MODERN_KATSUYOU_TYPE_UNSUPPORTED: 'diagnosticConjugationType',
   MODERN_KATSUYOU_FORM_UNSUPPORTED: 'diagnosticConjugationForm',
-  MODERN_COMPONENT_CLAUSE_UNRESOLVED: 'diagnosticClauseUnresolved',
-  MODERN_COMPONENT_PREDICATE_AMBIGUOUS: 'diagnosticPredicateAmbiguous',
-  MODERN_COMPONENT_SUBJECT_UNRESOLVED: 'diagnosticSubjectUnresolved',
-  MODERN_COMPONENT_SUBJECT_AMBIGUOUS: 'diagnosticSubjectAmbiguous',
-  MODERN_COMPONENT_PREDICATE_UNRESOLVED: 'diagnosticPredicateUnresolved',
-  MODERN_COMPONENT_MODIFIER_UNRESOLVED: 'diagnosticModifierUnresolved',
 };
 
 export function reviewSuggestions(

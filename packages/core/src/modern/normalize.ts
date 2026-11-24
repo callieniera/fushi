@@ -62,11 +62,18 @@ function isSou(item: IndexedMorpheme): boolean {
 function isIndependentRaw(item: IndexedMorpheme): boolean {
   const { raw } = item;
   if (raw.pos === '助詞' || raw.pos === '助動詞' || isPrefix(item) || isSuffix(item)) return false;
+  // フィラー (fillers like あの, ええと) should not be merged with suffixes
+  if (raw.pos === 'フィラー') return false;
   return raw.posDetail1 !== '非自立';
 }
 
 function isAdjectivalSuffix(item: IndexedMorpheme): boolean {
   return item.raw.posDetail1 === '接尾' && item.raw.posDetail2 === '形容動詞語幹';
+}
+
+function isAnoSaFiller(previous: IndexedMorpheme, suffix: IndexedMorpheme): boolean {
+  return previous.raw.pos === 'フィラー' && previous.raw.surface === 'あの' &&
+    suffix.raw.surface === 'さ' && suffix.raw.posDetail1 === '接尾' && suffix.raw.posDetail2 === '特殊';
 }
 
 function isAdjectivalEndingAfterSou(item: IndexedMorpheme): boolean {
@@ -174,6 +181,8 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
     const suffix = morphemes[i];
     if (!previous || !suffix || consumed.has(i)) continue;
     if (!isSuffix(suffix)) continue;
+    // Skip suffix merging for あのさ (filler + special suffix)
+    if (isAnoSaFiller(previous, suffix)) continue;
     const previousReplacement = replacements.get(i - 1);
     if (previousReplacement && previousReplacement.kind !== 'adjectival' && previousReplacement.kind !== 'sou') {
       consumed.add(i);
@@ -229,6 +238,10 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
     }
     const item = morphemes[i];
     if (!item) continue;
+    // Skip orphan suffix diagnostic for あのさ pattern (handled specially in remap)
+    const isAnoSaSuffix = isSuffix(item) &&
+      item.raw.surface === 'さ' && item.raw.posDetail1 === '接尾' && item.raw.posDetail2 === '特殊' &&
+      i > 0 && morphemes[i - 1]?.raw.pos === 'フィラー' && morphemes[i - 1]?.raw.surface === 'あの';
     if (isPrefix(item)) {
       diagnostics.push(
         diagnostic('MODERN_NORMALIZE_ORPHAN_PREFIX', 'A prefix without a mergeable host was retained.', 'warning', {
@@ -237,7 +250,7 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
           morphemeIds: [item.index],
         }),
       );
-    } else if (isSuffix(item)) {
+    } else if (isSuffix(item) && !isAnoSaSuffix) {
       diagnostics.push(
         diagnostic('MODERN_NORMALIZE_ORPHAN_SUFFIX', 'A suffix without a mergeable host was retained.', 'warning', {
           start: item.raw.start,

@@ -154,9 +154,15 @@ describe('normalization boundaries and source preservation', () => {
     expect(result.diagnostics[0]?.code).toBe('MODERN_INPUT_NOT_ARRAY');
   });
 
-  it('keeps punctuation as a best-effort token with a diagnostic', () => {
+  it('keeps punctuation as a best-effort token without a POS warning', () => {
     const result = parseModernMorphemes(morphemes([noun('本'), symbol('。')]));
     expect(result.text).toBe('本。');
-    expect(result.diagnostics.some((d) => d.code === 'MODERN_POS_UNSUPPORTED')).toBe(true);
+    expect(result.bunsetsu[1]?.tango[0]).toMatchObject({
+      surface: '。',
+      hinshi: '名詞',
+      subHinshi: '記号',
+      isIndependent: true,
+    });
+    expect(result.diagnostics.some((d) => d.code === 'MODERN_POS_UNSUPPORTED')).toBe(false);
   });
 });

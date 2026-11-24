@@ -167,151 +167,19 @@ In `遊んで`, the pronunciation changes, but Fushi still connects `遊ん` to 
 
 `降る` is a five-grade verb (五段動詞) in the noun-modifying form (連体形). This time, Fushi classifies the same visible words `そうだ` as **hearsay (伝聞)**. The surrounding sentence therefore changes the interpretation.
 
-## 2. Sentence Components and Basic Grammatical Relationships (文の成分・係り受け)
+## 2. Scope and diagnostics
 
-After making phrase segments, Fushi gives each segment a role when it can do so confidently:
+The supported modern pipeline stops after ordinary 文節 formation. It does not generate sentence components（文の成分）, dependency targets（係り受け）, clauses（節）, sentence types（単文・複文・重文）, or 連文節 groups.
 
-- **Subject (主語):** who or what the predicate talks about.
-- **Predicate (述語):** the main action, event, or description.
-- **Modifier (修飾語):** a segment that adds information to another segment.
-- **Connective (接続語):** a word that connects sentences or ideas.
-- **Independent word (独立語):** a word such as `はい` that stands apart from the main sentence structure.
+For example, `雨が降っているので傘を持って行きましょう` produces six ordinary 文節:
 
-Arrows below point to the actual Japanese segment, rather than an internal identification number. These links show basic grammatical relationships (係り受け): for example, which segment is the subject and which segment modifies the predicate.
+> `雨が | 降って | いるので | 傘を | 持って | 行きましょう`
 
-The modern analysis was checked with 29 focused sentence-component tests together with the core suite, which contains 235 tests in total. The kuromoji package has 24 tests, including real-dictionary 複文/重文 and subsidiary-predicate checks. Sentence-level results are experimental; 単語・文節 remain the primary output.
+The real-IPAdic regression checks that `いる` and `行き` remain independent school-grammar subsidiary verbs（補助動詞） in their own 文節. It also checks word surfaces, base forms, POS, conjugation, source offsets, and the absence of sentence-level diagnostics. A multi-clause example retains punctuation as its own 文節 and reports the existing `MODERN_POS_UNSUPPORTED` warning for that punctuation.
 
-### 2.1 Subject, object modifier, and predicate
+The former sentence analyzer and its focused tests are preserved under [`experimental/sentence-analysis`](./experimental/sentence-analysis/) as reference-only source. They are not supported exports and are not included in default test discovery.
 
-**Input:** `私は本を読む`
-
-| Phrase segment (文節) | Role | Connection to another segment |
-| --- | --- | --- |
-| `私は` | Subject (主語) | Subject of `読む` (主語) |
-| `本を` | Modifier (修飾語) | Modifies `読む` (修飾先) |
-| `読む` | Predicate (述語) | Has subject `私は` (主語); is modified by `本を` (修飾語) |
-
-Fushi reported no warnings or other notes.
-
-### 2.2 A subject marked by `が`
-
-**Input:** `子どもがお菓子を食べた`
-
-| Phrase segment (文節) | Role | Connection to another segment |
-| --- | --- | --- |
-| `子どもが` | Subject (主語) | Subject of `食べた` (主語) |
-| `お菓子を` | Modifier (修飾語) | Modifies `食べた` (修飾先) |
-| `食べた` | Predicate (述語) | Has subject `子どもが` (主語); is modified by `お菓子を` (修飾語) |
-
-Fushi reported no warnings or other notes.
-
-### 2.3 `の` and other modifiers
-
-**Input:** `私の本を読む`
-
-| Phrase segment (文節) | Role | Connection to another segment |
-| --- | --- | --- |
-| `私の` | Modifier (修飾語) | Modifies `本を` (修飾先) |
-| `本を` | Modifier (修飾語) | Modifies `読む` (修飾先) |
-| `読む` | Predicate (述語) | Is modified by `本を` (修飾語) |
-
-`私の` describes the following segment `本を`, which in turn adds information to the predicate `読む`. The sentence does not explicitly state a subject. Fushi therefore adds the expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`) instead of inventing one.
-
-### 2.4 Describing a noun and describing an action
-
-**Input:** `静かな公園で友達と話した`
-
-| Phrase segment (文節) | Role | Connection to another segment |
-| --- | --- | --- |
-| `静かな` | Modifier (修飾語) | Modifies `公園で` (修飾先) |
-| `公園で` | Modifier (修飾語) | Modifies `話した` (修飾先) |
-| `友達と` | Modifier (修飾語) | Modifies `話した` (修飾先) |
-| `話した` | Predicate (述語) | Is modified by `公園で` and `友達と` (修飾語) |
-
-`静かな` describes `公園で`. The segments `公園で` and `友達と` add information to `話した`. The expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`) records that the subject is unstated.
-
-### 2.5 An adverb and an unstated subject
-
-**Input:** `とても面白かった`
-
-| Phrase segment (文節) | Role | Connection to another segment |
-| --- | --- | --- |
-| `とても` | Modifier (修飾語) | Modifies `面白かった` (修飾先) |
-| `面白かった` | Predicate (述語) | Is modified by `とても` (修飾語) |
-
-The expected “subject not found” note (`MODERN_COMPONENT_SUBJECT_UNRESOLVED`) records the unstated subject without guessing who or what it is.
-
-### 2.6 A conjunction and an independent word
-
-**Input:** `はい、そして本を読む`
-
-| Phrase segment (文節) | Role | Connection to another segment |
-| --- | --- | --- |
-| `はい` | Independent word (独立語) | — |
-| `、` | Punctuation only | — |
-| `そして` | Connective (接続語) | — |
-| `本を` | Modifier (修飾語) | Modifies `読む` (修飾先) |
-| `読む` | Predicate (述語) | Is modified by `本を` (修飾語) |
-
-The punctuation-only segment produces the expected “unsupported word type” note (`MODERN_POS_UNSUPPORTED`). The unstated subject also produces `MODERN_COMPONENT_SUBJECT_UNRESOLVED`.
-
-The focused checks also cover `赤いのを選ぶ`, where `の` stands for a thing. They confirm that Fushi remembers each word's original location, keeps relationship targets consistent, and leaves the original input unchanged. When several predicates or an absent nominal head make a modifier's target uncertain, Fushi still retains a recognizable **修飾語** component and its **連体修飾語／連用修飾語** subtype. It reports a warning and leaves the relationship unset rather than guessing a target.
-
-These links provide basic grammatical relationships (係り受け), not a complete grammatical tree of the sentence. A noun-modifying link (修飾先) is recorded only on the modifier. Subject and predicate-modifier links are recorded on both connected segments.
-
-### 2.7 A causal subordinate clause (複文・接続節)
-
-**Input:** `雨が降ったので、私は家に帰った`
-
-| Phrase segment | Clause | Role | Connection |
-| --- | --- | --- | --- |
-| `雨が` | 接続節 | Subject | Subject of `降ったので` |
-| `降ったので` | 接続節 | Predicate | Has subject `雨が` |
-| `私は` | 主節 | Subject | Subject of `帰った` |
-| `家に` | 主節 | Modifier | Modifies `帰った` |
-| `帰った` | 主節 | Predicate | Has subject `私は`; is modified by `家に` |
-
-The subordinate clause links to the main clause with `{ kind: '主節', targetClauseId: 'modern-clause-1' }`. Its two explicit subjects no longer produce a cross-clause ambiguity warning. The punctuation-only segment retains its existing `MODERN_POS_UNSUPPORTED` diagnostic.
-
-A leading main topic is also handled: in `私は雨が降ったので家に帰った`, `私は` belongs to the main clause and `雨が` belongs to the subordinate clause.
-
-### 2.7a Subsidiary predicates and a 接続節 (複文)
-
-**Input:** `雨が降っているので傘を持って行きましょう`
-
-The six 文節 remain `雨が｜降って｜いるので｜傘を｜持って｜行きましょう`. Two `補助の関係` groups form `降っているので` and `持って行きましょう`. At sentence level the first is `接続語` and the second is `述語`. Inside the 接続節, `降っているので` remains the predicate and `雨が` links to its final head `いるので`. `傘を` is `修飾語（連用修飾語）` linked to `行きましょう`.
-
-Both clauses contain ordered `predicateBunsetsuIds`: `降って｜いるので` for the 接続節 and `持って｜行きましょう` for the 主節. The sentence type is `複文`. There is no predicate-ambiguity warning for absorbed subsidiary members; the main clause retains its expected omitted-subject warning. The real-dictionary test confirms that IPAdic supplies `非自立` features for both `いる` and `行き`.
-
-### 2.8 A relative clause (複文・連体修飾節)
-
-**Input:** `子どもが読んだ本を私は買った`
-
-| Phrase segment | Clause | Role | Connection |
-| --- | --- | --- | --- |
-| `子どもが` | 連体修飾節 | Subject | Subject of `読んだ` |
-| `読んだ` | 連体修飾節 | Predicate | Modifies `本を` |
-| `本を` | 主節 | Modifier | Modifies `買った` |
-| `私は` | 主節 | Subject | Subject of `買った` |
-| `買った` | 主節 | Predicate | Has subject `私は`; is modified by `本を` |
-
-The relative clause links to the main clause with `修飾先`; the bunsetsu `読んだ` also has its own `修飾先` link to `本を`. The clause's bunsetsu IDs need not be contiguous when a relative clause is embedded in its containing clause.
-
-### 2.9 Parallel predicates (重文・並立節)
-
-**Input:** `私は本を読んで、弟はテレビを見た`
-
-`私は本を読んで` and `弟はテレビを見た` are separate `並立節`. `私は` links to `読んで`, and `弟は` links to `見た`. The first clause has `{ kind: '並立', targetClauseId: 'modern-clause-1' }`. Neither clause is marked as subordinate to the other.
-
-Chained structures keep clause membership disjoint. In `雨が降ったので傘を持って出かけた`, `雨が降ったので` is a 接続節, `傘を持って` is a 並立節, and `出かけた` is the final 並立節. Supplementary predicates such as `読んでいる` are not split into parallel clauses.
-
-For recognized multi-clause input, `ParseResult.clauses` and direct analyzer results provide clause IDs, kinds, ordered bunsetsu membership, final predicate-head IDs, optional full predicate-member IDs, spans, and optional clause relations. Each bunsetsu has one `clauseId`. Supported resolved structures receive `sentenceType: '複文'` or `'重文'`. Omitted subjects still produce `MODERN_COMPONENT_SUBJECT_UNRESOLVED`; no shared subject is invented.
-
-Nested relative clauses, quotation/complement clauses, general 連文節 construction beyond explicit subsidiary relations, general 主語節・述語節・連用修飾節 recognition, and unrestricted semantic dependency parsing are not inferred. If a candidate structure would overlap or omit bunsetsu, Fushi leaves its clause metadata absent and reports `MODERN_COMPONENT_CLAUSE_UNRESOLVED` together with the conservative component diagnostics. Multiple predicates without a supported boundary likewise remain unresolved.
-
-**Validation:** 235 core tests, 24 kuromoji-engine tests, 19 learning unit/content tests, and all 7 sandbox browser tests passed, including real IPAdic examples; library/app builds passed. The unrelated pre-existing About-page browser expectation for `Fushi on GitHub (not yet public)` still fails.
-
-**Verified test run:** [sentence-components.test.ts](./packages/core/tests/modern/sentence-components.test.ts) — **1 test file passed, 29 tests passed** (Vitest 4.1.12, November 24, 2026).
+**Verified library run:** 207 core tests and 24 kuromoji-engine tests passed with Vitest 4.1.12 on November 24, 2026. The library build, core/engine/browser typechecks, and both Chromium package integration tests also passed. Learning-app migration and validation are tracked separately.
 
 ## 3. Conjugation Results (活用)
 

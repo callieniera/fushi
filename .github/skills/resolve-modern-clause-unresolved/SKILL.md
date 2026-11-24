@@ -1,11 +1,13 @@
 ---
 name: resolve-modern-clause-unresolved
-description: Diagnose and fix MODERN_COMPONENT_CLAUSE_UNRESOLVED for a Japanese sentence in the Fushi parser. Use when a user supplies a sentence or parse result with this diagnostic, asks why clause discovery failed, or requests a parser fix and regression coverage.
+description: Reference-only research on the archived MODERN_COMPONENT_CLAUSE_UNRESOLVED experiment. Use only when explicitly investigating or restoring experimental/sentence-analysis; not for supported Fushi parser changes.
 ---
 
-# Resolve MODERN_COMPONENT_CLAUSE_UNRESOLVED
+# Archived MODERN_COMPONENT_CLAUSE_UNRESOLVED research
 
-Resolve the clause-structure failure without suppressing the diagnostic or weakening the conservative parser.
+The supported modern library no longer performs clause discovery or emits this diagnostic. The former analyzer and focused tests are preserved under `experimental/sentence-analysis/` as reference-only source. Do not restore them, add production imports, or treat this workflow as a supported parser fix unless the user explicitly requests an experimental research restoration with evaluation coverage.
+
+The notes below describe the archived implementation only. Paths in the workflow refer to its original locations; use the corresponding archived copies for reading.
 
 ## Inputs
 
