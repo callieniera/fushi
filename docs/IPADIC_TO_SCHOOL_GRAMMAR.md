@@ -1,6 +1,6 @@
 # From IPAdic to Japanese School Grammar
 
-A plain-English guide to how Fushi translates Japanese dictionary information into **school grammar（学校文法）**—and where that translation is incomplete or incorrect.
+This is a guide to how Fushi translates Japanese dictionary information into **school grammar（学校文法）**—and where that translation is incomplete or incorrect.
 
 **No programming knowledge is needed for the main explanation.** The later sections contain a detailed audit for maintainers.
 
@@ -374,16 +374,12 @@ The supported modern pipeline stops at words and ordinary bunsetsu. It does **no
 - sentence types（単文・複文・重文）; or
 - combined phrase segments（連文節）.
 
-These are scope boundaries, not missing IPAdic label mappings.
-
 The supported modern pipeline also should not be expected to provide a complete Classical Japanese analysis merely because IPAdic contains Classical entries.
 
 ## 10. Remaining limitations and priorities
 
 1. **Broaden lexical verification.** The finite 上一段 list should be checked against a more complete lexical source, including reading/spelling variants.
 2. **Map real modern forms.** Start with 連用デ接続 and ガル接続, using a corpus to establish their actual contexts rather than copying the name mechanically.
-3. **Review remaining unsupported and ambiguous results.** Avoid presenting noun, `その他`, or a combined meaning label as though it were a completed school-grammar analysis.
-4. **Extend the real-IPAdic golden set.** Further claims should include expected words, subtypes, base forms, conjugation types/forms, bunsetsu, and diagnostics.
 
 A good acceptance rule for future work remains:
 

@@ -133,7 +133,7 @@ The supported modern library stops after forming ordinary 文節. It does **not*
 
 This boundary is deliberate. Local word patterns often provide useful 文節 boundaries, but sentence-level decisions can require omitted information, broader context, semantics, and discourse. Kuromoji/IPAdic supplies morphological features rather than a complete dependency tree. Finite exception rules cannot guarantee broadly accurate sentence analysis.
 
-That does not mean Japanese sentence analysis is impossible. Learned parsing models and evaluated linguistic resources are different approaches outside this library's current scope. The former experiment is preserved as reference-only source in [`experimental/sentence-analysis`](./experimental/sentence-analysis/); it is not part of the supported API.
+That does not mean Japanese sentence analysis is impossible. Learned parsing models and evaluated linguistic resources are different approaches outside this library's current scope.
 
 The quality of the word and 文節 result still depends on:
 
@@ -141,7 +141,7 @@ The quality of the word and 文節 result still depends on:
 2. Fushi's rules for combining word pieces.
 3. Fushi's decisions about which words are independent or dependent.
 
-These results remain best-effort; limiting the scope does not make tokenization or 文節 grouping perfect.
+These results remain best-effort; limiting the scope does not make tokenization or `文節` grouping perfect.
 
 ## In one sentence
 

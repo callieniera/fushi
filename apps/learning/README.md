@@ -1,6 +1,6 @@
 # Fushi learning app
 
-A static, client-side Modern Japanese School Grammar learning application. It includes complete English and Japanese interface/content localization, automatic OS light/dark themes, randomized curated sentence practice, and a separate on-demand Modern Japanese sandbox. Curated answers are never determined by live kuromoji output. The core library's Classical Japanese APIs are not used by this app.
+A static, client-side Modern Japanese School Grammar learning application. It includes complete English and Japanese interface/content localization, automatic OS light/dark themes, randomized curated sentence practice, and a separate on-demand Modern Japanese sandbox. Curated answers are never determined by live kuromoji output.
 
 ## Develop
 
