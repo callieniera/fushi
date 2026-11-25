@@ -46,7 +46,6 @@ const KATSUYOUKEI: Readonly<Record<string, ModernKatsuyoukei>> = {
   未然形サ: '未然形',
   未然形セ: '未然形',
   未然形シ: '未然形',
-  未然レル接続: '未然形',
   連用形: '連用形',
   連用タ接続: '連用形',
   連用テ接続: '連用形',
@@ -73,36 +72,6 @@ const INDEPENDENT_POS = new Set<Hinshi>([
 const BINDING_PARTICLES_AS_ADVERBIAL = new Set([
   'は', 'も', 'こそ', 'さえ', 'でも', 'しか', 'なぞ', 'なんて',
 ]);
-
-const MOTION_HOST_BASES = new Set(['持つ', '連れる', '運ぶ', '送る', '歩く', '走る', '帰る']);
-const MOTION_VERB_BASES = new Set(['行く', '来る']);
-
-function isContiguous(left: NormalizedToken, right: NormalizedToken): boolean {
-  return left.end === right.start;
-}
-
-function isMotionVerbCandidate(tokens: readonly NormalizedToken[], index: number): boolean {
-  const token = tokens[index];
-  const particle = tokens[index - 1];
-  const host = tokens[index - 2];
-  if (!token || !particle || !host || token.rawMorphemes.length !== 1) return false;
-  const raw = token.source.raw;
-  if (raw.pos !== '動詞' || raw.posDetail1 !== '非自立' ||
-    !MOTION_VERB_BASES.has(raw.baseForm ?? token.baseForm ?? '') ||
-    (!token.surface.includes('行') && !token.surface.includes('来'))) return false;
-  if (particle.source.raw.pos !== '助詞' || particle.source.raw.posDetail1 !== '接続助詞' ||
-    (particle.source.raw.surface !== 'て' && particle.source.raw.surface !== 'で')) return false;
-  const hostRaw = host.conjugationSource.raw;
-  return hostRaw.pos === '動詞' && hostRaw.posDetail1 === '自立' &&
-    isContiguous(host, particle) && isContiguous(particle, token);
-}
-
-function isMainMotionVerb(tokens: readonly NormalizedToken[], index: number): boolean {
-  if (!isMotionVerbCandidate(tokens, index)) return false;
-  const host = tokens[index - 2]!;
-  const hostRaw = host.conjugationSource.raw;
-  return MOTION_HOST_BASES.has(hostRaw.baseForm ?? host.baseForm ?? '');
-}
 
 function isNaiAfterVerb(tokens: readonly NormalizedToken[], index: number): boolean {
   const previous = tokens[index - 1];
@@ -336,8 +305,6 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
     let katsuyoukei = mapKatsuyoukei(token, hinshi ?? '名詞');
     let meaningTags = token.meaningTags ? [...token.meaningTags] : undefined;
 
-    if (isMainMotionVerb(tokens, index)) subHinshi = '自立';
-
     if (raw.surface === 'ない' || raw.baseForm === 'ない') {
       if (isNaiAfterVerb(tokens, index)) {
         hinshi = '助動詞';
@@ -368,9 +335,8 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
       }
     }
 
-    if ((raw.pos === '助動詞' || raw.pos === '動詞' && raw.posDetail1 === '接尾') &&
-      (raw.baseForm === 'れる' || raw.baseForm === 'られる' ||
-        raw.surface === 'れる' || raw.surface === 'られる')) {
+    if (raw.pos === '助動詞' && (raw.baseForm === 'れる' || raw.baseForm === 'られる' ||
+      raw.surface === 'れる' || raw.surface === 'られる')) {
       hinshi = '助動詞';
       independent = false;
       subHinshi = '受身・自発・可能・尊敬';

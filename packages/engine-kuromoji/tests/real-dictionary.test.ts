@@ -133,81 +133,23 @@ describe('real kuromoji dictionary integration', () => {
     });
   });
 
-  it('groups te-form subsidiary verbs with their host bunsetsu', async () => {
+  it('keeps real-dictionary subsidiary verbs as separate ordinary bunsetsu', async () => {
     await withRealTokenizer((tokenizer) => {
-      for (const text of ['食べている', '食べているので']) {
-        const parsed = parseReal(tokenizer, text);
-        expect(parsed.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
-          .toEqual([text]);
-        expect(parsed.diagnostics).toEqual([]);
-      }
-
-      const politeProgressive = parseReal(tokenizer, '調べています');
-      expect(politeProgressive.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
-        .toEqual(['調べています']);
-      expect(politeProgressive.bunsetsu[0]?.tango.map(({ surface }) => surface)).toEqual([
-        '調べ', 'て', 'い', 'ます',
-      ]);
-      expect(politeProgressive.diagnostics).toEqual([]);
-
-      const politeRequest = parseReal(tokenizer, '食べてください');
-      expect(politeRequest.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
-        .toEqual(['食べてください']);
-      expect(politeRequest.bunsetsu[0]?.tango.at(-1)).toMatchObject({
-        surface: 'ください', hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true,
-      });
-      expect(politeRequest.diagnostics).toEqual([]);
-
       const text = '雨が降っているので傘を持って行きましょう';
       const result = parseReal(tokenizer, text);
       expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
-        .toEqual(['雨が', '降っているので', '傘を', '持って', '行きましょう']);
-      expect(result.bunsetsu[1]?.tango[2]).toMatchObject({
+        .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう']);
+      expect(result.bunsetsu[2]?.tango[0]).toMatchObject({
         surface: 'いる', hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true,
       });
-      expect(result.bunsetsu[4]?.tango[0]).toMatchObject({
-        surface: '行き', baseForm: '行く', hinshi: '動詞', subHinshi: '自立', katsuyoukei: '連用形',
+      expect(result.bunsetsu[5]?.tango[0]).toMatchObject({
+        surface: '行き', baseForm: '行く', hinshi: '動詞', subHinshi: '補助動詞', katsuyoukei: '連用形',
       });
       expect(result.diagnostics).toEqual([]);
       const punctuated = parseReal(tokenizer, `${text}。`);
       expect(punctuated.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
-        .toEqual(['雨が', '降っているので', '傘を', '持って', '行きましょう', '。']);
+        .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう', '。']);
       expect(punctuated.diagnostics.map((issue) => issue.code)).toEqual([]);
-    });
-  });
-
-  it('distinguishes main-motion 行く/来る from aspectual subsidiary uses', async () => {
-    await withRealTokenizer((tokenizer) => {
-      for (const [text, surface, bunsetsu] of [
-        ['傘を持って行きます', '行き', ['傘を', '持って', '行きます']],
-        ['子供を連れて行く', '行く', ['子供を', '連れて', '行く']],
-        ['荷物を運んで来る', '来る', ['荷物を', '運んで', '来る']],
-        ['学校へ歩いて行く', '行く', ['学校へ', '歩いて', '行く']],
-      ] as const) {
-        const result = parseReal(tokenizer, text);
-        expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')), text)
-          .toEqual(bunsetsu);
-        const token = result.bunsetsu.flatMap((item) => item.tango).find((tango) => tango.surface === surface);
-        expect(token, text).toMatchObject({ hinshi: '動詞', subHinshi: '自立', isIndependent: true });
-        expect(token?.rawMorphemes?.[0]?.posDetail1).toBe('非自立');
-        expect(result.diagnostics, text).toEqual([]);
-      }
-
-      for (const [text, surface, bunsetsu] of [
-        ['人口が減っていく', 'いく', ['人口が', '減っていく']],
-        ['慣れてくる', 'くる', ['慣れてくる']],
-        ['読んでいく', 'いく', ['読んでいく']],
-        ['寒くなってくる', 'くる', ['寒く', 'なってくる']],
-        ['傘を持っていきます', 'いき', ['傘を', '持っていきます']],
-        ['読んで来る', '来る', ['読んで来る']],
-      ] as const) {
-        const result = parseReal(tokenizer, text);
-        expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')), text)
-          .toEqual(bunsetsu);
-        expect(result.bunsetsu.flatMap((item) => item.tango).find((tango) => tango.surface === surface), text)
-          .toMatchObject({ hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true });
-        expect(result.diagnostics, text).toEqual([]);
-      }
     });
   });
 
@@ -247,37 +189,6 @@ describe('real kuromoji dictionary integration', () => {
       const separated = parseReal(tokenizer, '勉強をする');
       expect(separated.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['勉強を', 'する']);
       expect(separated.bunsetsu[0]?.tango[0]?.hinshi).toBe('名詞');
-    });
-  });
-
-  it('preserves school-word boundaries in a サ変 passive form', async () => {
-    await withRealTokenizer((tokenizer) => {
-      const result = parseReal(tokenizer, '逮捕された');
-      const tokens = result.bunsetsu.flatMap(({ tango }) => tango);
-
-      expect(tokens.map(({ surface, hinshi }) => [surface, hinshi])).toEqual([
-        ['逮捕', '名詞'],
-        ['さ', '動詞'],
-        ['れ', '助動詞'],
-        ['た', '助動詞'],
-      ]);
-      expect(result.bunsetsu.map(({ tango }) => tango.map(({ surface }) => surface).join('')))
-        .toEqual(['逮捕された']);
-      expect(tokens[0]).toMatchObject({ baseForm: '逮捕', subHinshi: 'サ変接続' });
-      expect(tokens[1]).toMatchObject({
-        baseForm: 'する',
-        katsuyouType: 'サ変',
-        katsuyoukei: '未然形',
-      });
-      expect(tokens[2]).toMatchObject({
-        baseForm: 'れる',
-        subHinshi: '受身・自発・可能・尊敬',
-        katsuyouType: '下一段',
-        katsuyoukei: '連用形',
-        isIndependent: false,
-      });
-      expect(tokens[2]?.rawMorphemes?.map(({ surface }) => surface)).toEqual(['れ']);
-      expect(result.diagnostics.map(({ code }) => code)).toEqual(['MODERN_RERU_AMBIGUOUS']);
     });
   });
 

@@ -137,12 +137,10 @@ Fushi currently recognizes these combinations:
 | --- | --- | --- |
 | Adjectival stem + one permitted ending | 形容動詞 | 静か + だ、静か + な、静か + に |
 | そう or よう + one permitted ending | 助動詞 | そう + だ、そう + です、よう + な |
-| サ変接続 noun + immediately adjacent する (except 未然レル接続) | One サ変 動詞 | 勉強 + する |
+| サ変接続 noun + immediately adjacent する | One サ変 動詞 | 勉強 + する |
 | 同じ + an inflecting だ ending | 形容動詞 | 同じ + だ |
 | Prefix + suitable independent host | Usually one word | お + 菓子 |
 | Suffix + suitable independent host | Noun, adjectival stem, or verb according to the suffix | 子ども + たち、科学 + 的、痛 + がる |
-
-IPAdic can label **れ** in a passive form as a verb suffix. Fushi preserves the school-word boundaries and remaps it to an auxiliary: **サ変された** becomes **サ変 / さ / れ / た**.
 
 The permitted adjectival endings are **だ・だろ・だっ・で・に・な・なら**, with **です** handled as a polite terminal ending for reconstructed adjectival and auxiliary-stem words. **勉強をする** remains separate because を interrupts the noun–する sequence. **同じな** remains attributive 連体詞 usage rather than being forced into the inflecting pattern.
 
@@ -195,7 +193,7 @@ The main form translations are:
 
 | IPAdic form | School-grammar form |
 | --- | --- |
-| 未然形、未然ウ接続、未然形サ・セ・シ、未然レル接続 | 未然形 |
+| 未然形、未然ウ接続、未然形サ・セ・シ | 未然形 |
 | 連用形、連用タ接続、連用テ接続、連用ニ接続、連用ゴザイ接続 | 連用形 |
 | 基本形 | Provisionally 終止形, then checked against context |
 | 体言接続、体言接続特殊・特殊２ | 連体形, with a limited sentence-final check |
@@ -215,26 +213,17 @@ Fushi has special handling for a few easily confused words:
 | の | 格助詞・準体助詞・終助詞, using selected IPAdic labels |
 | に | Usually retains its label; some cases become 接続助詞 |
 | あの | 連体詞 before nominal material vs. 感動詞 as a hesitation |
-| て/で + 行く・来る | Main physical motion（自立） vs. aspectual subsidiary verb（補助動詞） |
 | 基本形 | 終止形 vs. 連体形, based mainly on what follows |
-
-For a directly adjacent independent verb + **て/で** + IPAdic-non-independent **行く・来る**, Fushi uses two required orthographic/base-form conditions and one lexical signal. The candidate base form must be kanji **行く** or **来る**, its surface must contain **行** or **来**, and the preceding host must be in the curated motion/transport list **持つ・連れる・運ぶ・送る・歩く・走る・帰る**.
-
-When all conditions match, Fushi selects `subHinshi: 自立`; otherwise the existing `補助動詞` label remains. Thus **持って行く** and **運んで来る** are treated as motion, while **持っていく**, **読んで来る**, **減っていく**, and **慣れてくる** remain subsidiary uses. Goal/path particles and IPAdic `地域` labels are not classification signals. This is deliberately heuristic: the lexical list and kanji do not prove a reading. The original raw IPAdic `非自立` label is preserved.
-
-The rule does not skip intervening **は・も・さえ** or provide special contraction handling. Real IPAdic already labels **行く** as 自立 after **ては/ても**, and tokenizes **持ってく** as **持っ + て + く**.
 
 These rules cover only selected patterns. They are not a complete understanding of the sentence.
 
 ### Step 6: Form bunsetsu
 
-The default grouping rule is:
+The grouping rule is simple:
 
 1. Start a new bunsetsu at an independent word.
 2. Attach following dependent words to it.
 3. Repeat at the next independent word.
-
-A directly adjacent サ変接続 noun and the 未然レル接続 form of **する** remain separate words but stay in the same bunsetsu.
 
 Thus:
 
@@ -244,9 +233,9 @@ becomes:
 
 > **私は｜本を｜読まない**
 
-A subsidiary verb directly following the connecting particle **て** or **で** remains a separate word in the preceding bunsetsu. Thus **食べている**, **食べているので**, **調べています**, and **食べてください** each form one bunsetsu without merging their word tokens. Aspectual **減っていく** follows the same rule.
+A subsidiary verb such as **いる** in **食べている** remains an independent verb, so it starts its own bunsetsu:
 
-When the contextual rule above identifies main-motion **行く・来る**, its subtype is 自立 rather than 補助動詞, so it starts a new bunsetsu: **傘を｜持って｜行きます**. The words and original morphemes themselves are not merged or rewritten.
+> **食べて｜いる**
 
 If the sequence starts with a dependent word, Fushi retains it and reports `MODERN_BUNSETSU_LEADING_DEPENDENT`.
 

@@ -532,8 +532,8 @@
     },
     "splitExplanations": {
       "bunsetsu": {
-        "en": "雨が｜降っているので｜傘を｜持って｜行きましょう. The subsidiary verb いる stays with 降って, while main-motion 行き starts its own segment.",
-        "ja": "雨が｜降っているので｜傘を｜持って｜行きましょう。補助動詞の「いる」は「降って」と同じ文節に含め、本動詞の「行き」は新しい文節を始めます。"
+        "en": "雨が｜降って｜いるので｜傘を｜持って｜行きましょう. Each segment starts with an independent word and includes its following supporting words.",
+        "ja": "雨が｜降って｜いるので｜傘を｜持って｜行きましょう。各文節は自立語から始まり、後に続く付属語を含みます。"
       },
       "tango": {
         "en": "雨｜が｜降っ｜て｜いる｜ので｜傘｜を｜持っ｜て｜行き｜ましょう. These are the school-grammar words inside the phrase segments.",
@@ -590,12 +590,18 @@
               "start": 4,
               "end": 5,
               "subHinshi": "接続助詞"
-            },
+            }
+          ],
+          "start": 2,
+          "end": 5
+        },
+        {
+          "id": "practice-05-b2",
+          "tango": [
             {
-              "id": "practice-05-t1-2",
+              "id": "practice-05-t2-0",
               "surface": "いる",
               "hinshi": "動詞",
-              "subHinshi": "補助動詞",
               "isIndependent": true,
               "start": 5,
               "end": 7,
@@ -604,7 +610,7 @@
               "baseForm": "いる"
             },
             {
-              "id": "practice-05-t1-3",
+              "id": "practice-05-t2-1",
               "surface": "ので",
               "hinshi": "助詞",
               "isIndependent": false,
@@ -613,7 +619,7 @@
               "subHinshi": "接続助詞"
             }
           ],
-          "start": 2,
+          "start": 5,
           "end": 9
         },
         {
@@ -674,7 +680,6 @@
               "id": "practice-05-t5-0",
               "surface": "行き",
               "hinshi": "動詞",
-              "subHinshi": "自立",
               "isIndependent": true,
               "start": 14,
               "end": 16,
