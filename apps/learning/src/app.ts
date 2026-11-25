@@ -25,14 +25,7 @@ export function appView(content: Curriculum, progress: ProgressStore, sandbox = 
     render();
   });
   language.className = 'language-toggle';
-  const reset = button('', () => {
-    if (globalThis.confirm(text(progress.value.preferences.language, 'resetConfirm'))) {
-      progress.reset();
-      render();
-    }
-  });
-  reset.className = 'reset-progress';
-  header.append(brand, nav, language, reset);
+  header.append(brand, nav, language);
   const status = element('p', { id: 'app-status', className: 'sr-only', attributes: { role: 'status', 'aria-live': 'polite' } });
   const main = element('main', { id: 'main', attributes: { tabindex: '-1' } });
   const footer = element('footer');
@@ -56,7 +49,6 @@ export function appView(content: Curriculum, progress: ProgressStore, sandbox = 
     language.setAttribute('aria-label', t('languageLabel'));
     language.setAttribute('aria-pressed', String(lang === 'ja'));
     language.lang = lang === 'en' ? 'ja' : 'en';
-    reset.textContent = t('resetProgress');
     footerText.textContent = t('footer');
     licenses.textContent = t('licenses');
     const route = parseRoute(globalThis.location.hash);
