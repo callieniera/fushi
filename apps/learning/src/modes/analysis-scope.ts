@@ -40,12 +40,8 @@ export function analysisScopeView(language: Language = 'en'): HTMLElement {
       view.append(list);
     }
   }
-  view.append(element('h3', { text: t('analysisScopeLessonsTitle') }), element('p', { text: t('analysisScopeLessonsBody') }));
   const links = element('p', { className: 'button-row' });
-  links.append(
-    element('a', { text: t('analysisScopeLessonsLink'), attributes: { href: '#/lessons/sentence-components' } }),
-    element('a', { text: t('analysisScopeExplorerLink'), attributes: { href: '#/sandbox' } }),
-  );
+  links.append(element('a', { text: t('analysisScopeExplorerLink'), attributes: { href: '#/sandbox' } }));
   view.append(links);
   return view;
 }

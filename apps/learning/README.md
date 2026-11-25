@@ -1,6 +1,6 @@
 # Fushi learning app
 
-A static, client-side Modern Japanese School Grammar learning application. It includes complete English and Japanese interface/content localization, automatic OS light/dark themes, randomized curated sentence practice, and a separate on-demand Modern Japanese sandbox. Curated answers are never determined by live kuromoji output.
+A static, client-side Modern Japanese School Grammar learning application. Sentence explorer is the home page, with complete English and Japanese interface localization, automatic OS light/dark themes, randomized sample sentences, and on-demand analysis. Curated answers are never determined by live kuromoji output.
 
 ## Develop
 
@@ -13,13 +13,14 @@ npx --yes pnpm@10.28.2 dev:app
 
 The root scripts build the private library packages and aggregate `dist` before the app resolves `@callieniera/fushi/core` or `@callieniera/fushi/kuromoji`. The root `build` command remains library-only; `build:app` explicitly builds the library first, then validates content and compiles this app. No source alias bypasses that package boundary.
 
-Open the Vite URL printed by `dev:app`. Hash routes require no server rewrite configuration:
+Open the Vite URL printed by `dev:app`. The root URL and `#/sandbox` both open Sentence explorer. Hash routes require no server rewrite configuration:
 
-- `#/lessons`
-- `#/drills`
+- `#/` (home)
 - `#/sandbox`
 - `#/analysis-scope`
 - `#/about`
+
+The main navigation contains only Sentence explorer and About. The former `#/lessons`, lesson-detail, and `#/drills` routes render the not-found view; their source and content remain in the repository but are not connected to the application.
 
 The About page introduces Fushi, links to the GitHub project and analysis-scope explanation, and embeds the complete Apache 2.0 and IPAdic notices from `public/dictionaries/notices/`. The analysis-scope page is also linked from the explorer but is intentionally absent from the main navigation. It explains the automatic word/文節 pipeline and its limits in English and Japanese without loading kuromoji or requesting dictionary files.
 
@@ -27,7 +28,7 @@ The About page introduces Fushi, links to the GitHub project and analysis-scope 
 
 Edit `src/content/curriculum.json` and `src/content/passages/*.json`. `scripts/check-content.ts` validates modern-only content before every production build. Source offsets are JavaScript UTF-16 offsets, surfaces must match their spans, and every authored title, explanation, and prompt provides English and Japanese text.
 
-The split lesson and sandbox sample button share 13 eligible passages. Selection avoids an immediate repeat whenever alternatives exist; both split stages retain the selected sentence. Accepted boundaries derive directly from the passage's curated word/phrase spans, and localized split explanations live with each passage. Sentence components, `連文節`, and other exercise answers remain separately curated metadata.
+The dormant split lesson and the sandbox sample button share 13 eligible passages. Sample selection avoids an immediate repeat whenever alternatives exist. Accepted boundaries derive directly from each passage's curated word/phrase spans, and localized split explanations live with each passage. Sentence components, `連文節`, and other exercise answers remain separately curated metadata.
 
 The sandbox's full automatic scope is 単語・品詞・活用・文節. It displays annotated words and phrase segments, selectable word details, and word-level diagnostics. It does not generate sentence components, dependencies, clauses, sentence types, or automatic `連文節`. Known diagnostic codes have bilingual learner-facing explanations; unknown codes use a generic fallback rather than exposing internal messages. Curated sentence-grammar lessons and their authored answers remain independent of live parsing.
 
@@ -49,7 +50,7 @@ The same version is used in `/dictionaries/kuromoji/<version>/` and the `fushi-i
 
 Serve `.dat.gz` as raw gzip bytes with `Content-Type: application/gzip` and **without** `Content-Encoding: gzip`. The app relies on browser `DecompressionStream('gzip')`. `public/_headers` configures immutable caching for versioned files and revalidation for HTML. The copy script also distributes kuromoji's Apache license and its upstream IPAdic NOTICE under `dictionaries/notices/`.
 
-The sandbox is loaded only after the user requests analysis. Curated routes neither download the dictionary nor include kuromoji in their initial dependency graph. There is intentionally no service worker in this release.
+The analyzer is loaded only after the user requests analysis. Opening the home, About, or analysis-scope page neither downloads the dictionary nor includes kuromoji in the initial dependency graph. There is intentionally no service worker in this release.
 
 ## Verify
 
@@ -66,7 +67,7 @@ npx --yes pnpm@10.28.2 test:app:e2e
 
 `test:browser` retains the Phase 1 package fixture on port 4173. The app E2E suite builds the production app and uses a separate raw-gzip static preview on port 4174; it does not use Vite's development transform pipeline.
 
-The app unit/content suite covers routing, content validation, exercise logic, and sandbox engine lifecycle. The production browser suite covers real-dictionary word/文節 output, word details and diagnostics, localization, retry and clearing, curated lessons, and the bilingual analysis-scope page. The full app browser run retains one unrelated pre-existing About-page failure: it expects a `Fushi on GitHub (not yet public)` link that the current About view does not render.
+The app unit/content suite covers routing, content validation, exercise logic, and sandbox engine lifecycle. The production browser suite covers the simplified home navigation, unavailable lesson/practice routes, real-dictionary word/文節 output, word details and diagnostics, localization, retry and clearing, and the bilingual analysis-scope page.
 
 To inspect the production output manually:
 
@@ -94,4 +95,4 @@ Deploy explicitly after preview verification:
 npx --yes pnpm@10.28.2 deploy:app
 ```
 
-Before production release, test a Pages preview for every hash route, JavaScript/CSS assets, curated content, all 12 versioned dictionary files, and the Modern Japanese sandbox. Confirm raw-gzip response bytes and headers, immutable versioned caching, HTML revalidation, cold/warm Cache API loading, no console/CORS failures, and continued curated-lesson access when dictionary requests fail. Local verification cannot substitute for that hosted preview check.
+Before production release, test a Pages preview for every supported hash route, JavaScript/CSS assets, all 12 versioned dictionary files, and the Modern Japanese sandbox. Confirm raw-gzip response bytes and headers, immutable versioned caching, HTML revalidation, cold/warm Cache API loading, no console/CORS failures, and successful retry after dictionary requests fail. Local verification cannot substitute for that hosted preview check.

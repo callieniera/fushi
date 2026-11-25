@@ -5,9 +5,6 @@ import { ModernSandbox } from './lib/fushi-client.js';
 import { SentencePool } from './lib/sentence-pool.js';
 import { aboutView } from './modes/about.js';
 import { analysisScopeView } from './modes/analysis-scope.js';
-import { drillsView } from './modes/drills.js';
-import { lessonsView } from './modes/lessons.js';
-import { lessonView } from './modes/lesson-view.js';
 import { sandboxView } from './modes/sandbox.js';
 import { parseRoute, type Route } from './router.js';
 import type { ProgressStore } from './storage.js';
@@ -15,11 +12,9 @@ import type { ProgressStore } from './storage.js';
 export function appView(content: Curriculum, progress: ProgressStore, sandbox = new ModernSandbox(), pool = new SentencePool<AnnotatedPassage>()): HTMLElement {
   const shell = element('div');
   const header = element('header', { className: 'site-header' });
-  const brand = element('a', { className: 'brand', text: 'Fushi', attributes: { href: '#/lessons' } });
+  const brand = element('a', { className: 'brand', text: 'Fushi', attributes: { href: '#/' } });
   const nav = element('nav');
   const routes = [
-    { route: '#/lessons', key: 'lessons' },
-    { route: '#/drills', key: 'drills' },
     { route: '#/sandbox', key: 'sandbox' },
     { route: '#/about', key: 'about' },
   ] as const;
@@ -67,7 +62,7 @@ export function appView(content: Curriculum, progress: ProgressStore, sandbox = 
     const route = parseRoute(globalThis.location.hash);
     for (const { link } of links) {
       const href = link.getAttribute('href');
-      const current = href === '#/lessons' ? route.name === 'lessons' || route.name === 'lesson' : href === `#/${route.name}`;
+      const current = href === `#/${route.name}`;
       if (current) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     }
@@ -78,12 +73,6 @@ export function appView(content: Curriculum, progress: ProgressStore, sandbox = 
 
   function viewForRoute(route: Route): HTMLElement {
     const lang = progress.value.preferences.language;
-    if (route.name === 'lessons') return lessonsView(content, progress, lang);
-    if (route.name === 'lesson') {
-      const lesson = content.lessons.find((item) => item.id === route.id);
-      return lesson ? lessonView(content, lesson, progress, lang, pool) : notFound(lang);
-    }
-    if (route.name === 'drills') return drillsView(content, progress, lang);
     if (route.name === 'sandbox') return sandboxView(sandbox, lang, content, pool);
     if (route.name === 'analysis-scope') return analysisScopeView(lang);
     if (route.name === 'about') return aboutView(lang);
@@ -97,14 +86,11 @@ export function appView(content: Curriculum, progress: ProgressStore, sandbox = 
 
 function notFound(lang: 'en' | 'ja'): HTMLElement {
   const section = element('section');
-  section.append(element('h2', { text: text(lang, 'notFoundTitle') }), element('p', { text: text(lang, 'notFoundBody') }), element('a', { text: text(lang, 'returnLessons'), attributes: { href: '#/lessons' } }));
+  section.append(element('h2', { text: text(lang, 'notFoundTitle') }), element('p', { text: text(lang, 'notFoundBody') }), element('a', { text: text(lang, 'returnExplorer'), attributes: { href: '#/' } }));
   return section;
 }
 
 function routeTitle(route: Route, lang: 'en' | 'ja'): string {
-  if (route.name === 'lesson') return text(lang, 'lessons');
-  if (route.name === 'lessons') return text(lang, 'lessons');
-  if (route.name === 'drills') return text(lang, 'drills');
   if (route.name === 'sandbox') return text(lang, 'sandbox');
   if (route.name === 'analysis-scope') return text(lang, 'analysisScopeTitle');
   if (route.name === 'about') return text(lang, 'about');

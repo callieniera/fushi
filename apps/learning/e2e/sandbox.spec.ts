@@ -77,7 +77,7 @@ test('word results and diagnostics localize and clear with the result', async ({
   await expect(page.getByLabel('日本語の文（1,000文字まで）')).toHaveValue('');
 });
 
-test('dictionary failure supports retry and curated lessons remain available', async ({ page }) => {
+test('dictionary failure supports retry after navigating away and back', async ({ page }) => {
   let fail = true;
   await page.route('**/dictionaries/kuromoji/**', async (route) => {
     if (fail) await route.abort('failed');
@@ -87,8 +87,8 @@ test('dictionary failure supports retry and curated lessons remain available', a
   await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('私は本を読む');
   await page.getByRole('button', { name: 'Explore sentence' }).click();
   await expect(page.getByRole('button', { name: 'Try again', exact: true })).toBeVisible();
-  await page.getByRole('link', { name: 'Lessons', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Learn from phrases to full analysis' })).toBeVisible();
+  await page.getByRole('link', { name: 'About Fushi', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'About Fushi', exact: true })).toBeVisible();
   fail = false;
   await page.getByRole('link', { name: 'Sentence explorer', exact: true }).click();
   await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('私は本を読む');
