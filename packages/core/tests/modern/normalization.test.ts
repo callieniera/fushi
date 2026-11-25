@@ -80,7 +80,7 @@ describe('normalization and conjugation grammar traps', () => {
   });
 });
 
-describe('school-word reconstruction repairs', () => {
+describe('separate サ変 nouns and verbs', () => {
   it.each([
     ['勉強する', 'する', '基本形', '終止形'],
     ['勉強します', 'し', '連用形', '連用形'],
@@ -89,25 +89,34 @@ describe('school-word reconstruction repairs', () => {
     ['勉強しよう', 'しよ', '未然ウ接続', '未然形'],
     ['勉強すれば', 'すれ', '仮定形', '仮定形'],
     ['勉強しろ', 'しろ', '命令ｒｏ', '命令形'],
-  ])('reconstructs %s as one サ変 verb', (_name, suruSurface, sourceForm, expectedForm) => {
+  ])('keeps %s as separate noun and サ変 verb words', (_name, suruSurface, sourceForm, expectedForm) => {
     const input = morphemes([noun('勉強', 'サ変接続'), verb(suruSurface, 'する', 'サ変・スル', sourceForm)]);
     const result = parseModernMorphemes(input);
-    const token = result.bunsetsu[0]?.tango[0];
-    expect(token).toMatchObject({
-      surface: `勉強${suruSurface}`,
-      baseForm: '勉強する',
+    const tokens = result.bunsetsu.flatMap((bunsetsu) => bunsetsu.tango);
+    expect(result.bunsetsu.map((bunsetsu) => bunsetsu.tango.map((token) => token.surface).join('')))
+      .toEqual([`勉強${suruSurface}`]);
+    expect(tokens[0]).toMatchObject({
+      surface: '勉強',
+      baseForm: '勉強',
+      hinshi: '名詞',
+      subHinshi: 'サ変接続',
+      isIndependent: true,
+    });
+    expect(tokens[1]).toMatchObject({
+      surface: suruSurface,
+      baseForm: 'する',
       hinshi: '動詞',
       katsuyouType: 'サ変',
       katsuyoukei: expectedForm,
       isIndependent: true,
-      start: 0,
-      end: input[1]?.end,
+      start: 2,
     });
-    expect(token?.rawMorphemes).toEqual(input);
+    expect(tokens[0]?.rawMorphemes?.map(({ surface }) => surface)).toEqual(['勉強']);
+    expect(tokens[1]?.rawMorphemes?.map(({ surface }) => surface)).toEqual([suruSurface]);
     expect(result.diagnostics).toEqual([]);
   });
 
-  it('does not reconstruct 勉強をする across を', () => {
+  it('keeps 勉強をする as separate words', () => {
     const result = parseModernMorphemes(morphemes([
       noun('勉強', 'サ変接続'), particle('を', '格助詞'), verb('する', 'する', 'サ変・スル', '基本形'),
     ]));

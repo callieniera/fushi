@@ -95,16 +95,6 @@ function isAuxiliaryStem(item: IndexedMorpheme, surface: string): boolean {
   return item.raw.surface === surface && item.raw.posDetail2 === '助動詞語幹';
 }
 
-function isSahenHost(item: IndexedMorpheme): boolean {
-  return item.raw.pos === '名詞' && item.raw.posDetail1 === 'サ変接続';
-}
-
-function isSuru(item: IndexedMorpheme): boolean {
-  return item.raw.pos === '動詞' && item.raw.baseForm === 'する' &&
-    item.raw.conjugationType?.startsWith('サ変') === true &&
-    item.raw.conjugatedForm !== '未然レル接続';
-}
-
 function isOnaji(item: IndexedMorpheme): boolean {
   return item.raw.surface === '同じ' && item.raw.pos === '連体詞';
 }
@@ -177,25 +167,6 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
         forcedIndependent: onaji,
         forcedKatsuyouType: 'その他',
         forcedKatsuyoukei: katsuyoukei,
-      }),
-    );
-  }
-
-  for (let i = 0; i < morphemes.length - 1; i += 1) {
-    const host = morphemes[i];
-    const suru = morphemes[i + 1];
-    if (!host || !suru || consumed.has(i) || consumed.has(i + 1)) continue;
-    if (!isSahenHost(host) || !isSuru(suru)) continue;
-    consumed.add(i);
-    consumed.add(i + 1);
-    replacements.set(
-      i,
-      makeToken([host, suru], 'sahen', {
-        source: host,
-        conjugationSource: suru,
-        baseForm: `${host.raw.baseForm ?? host.raw.surface}する`,
-        forcedHinshi: '動詞',
-        forcedIndependent: true,
       }),
     );
   }

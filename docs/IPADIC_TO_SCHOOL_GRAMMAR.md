@@ -137,14 +137,16 @@ Fushi currently recognizes these combinations:
 | --- | --- | --- |
 | Adjectival stem + one permitted ending | 形容動詞 | 静か + だ、静か + な、静か + に |
 | そう or よう + one permitted ending | 助動詞 | そう + だ、そう + です、よう + な |
-| サ変接続 noun + immediately adjacent する (except 未然レル接続) | One サ変 動詞 | 勉強 + する |
+| サ変接続 noun + immediately adjacent する | Keep separate words: 名詞 + サ変動詞 | 勉強 + する |
 | 同じ + an inflecting だ ending | 形容動詞 | 同じ + だ |
 | Prefix + suitable independent host | Usually one word | お + 菓子 |
 | Suffix + suitable independent host | Noun, adjectival stem, or verb according to the suffix | 子ども + たち、科学 + 的、痛 + がる |
 
 IPAdic can label **れ** in a passive form as a verb suffix. Fushi preserves the school-word boundaries and remaps it to an auxiliary: **逮捕された** becomes **逮捕 / さ / れ / た**.
 
-The permitted adjectival endings are **だ・だろ・だっ・で・に・な・なら**, with **です** handled as a polite terminal ending for reconstructed adjectival and auxiliary-stem words. **勉強をする** remains separate because を interrupts the noun–する sequence. **同じな** remains attributive 連体詞 usage rather than being forced into the inflecting pattern.
+A サ変接続 noun and a following form of **する** remain separate words. The noun keeps 名詞 as its part of speech; the conjugated verb keeps **する** as its base form and サ変 as its conjugation type.
+
+The permitted adjectival endings are **だ・だろ・だっ・で・に・な・なら**, with **です** handled as a polite terminal ending for reconstructed adjectival and auxiliary-stem words. **勉強をする** also remains separate, with を interrupting the noun–する sequence. **同じな** remains attributive 連体詞 usage rather than being forced into the inflecting pattern.
 
 This joining stage is intentionally rule-based. It uses IPAdic labels and immediate neighbors; it does not infer arbitrary word boundaries from spelling alone.
 
@@ -227,7 +229,7 @@ The default grouping rule is:
 2. Attach following dependent words to it.
 3. Repeat at the next independent word.
 
-A directly adjacent サ変接続 noun and the 未然レル接続 form of **する** remain separate words but stay in the same bunsetsu.
+A directly adjacent サ変接続 noun and a conjugated form of **する** remain separate words but stay in the same bunsetsu. If a particle intervenes, as in **勉強をする**, the verb starts a new bunsetsu.
 
 Thus:
 

@@ -168,24 +168,36 @@ describe('real kuromoji dictionary integration', () => {
     });
   });
 
-  it('reconstructs サ変 words while preserving 勉強をする', async () => {
+  it('preserves separate サ変 noun and verb words through real IPAdic', async () => {
     await withRealTokenizer((tokenizer) => {
-      for (const [text, surface, form] of [
-        ['勉強する', '勉強する', '終止形'],
-        ['勉強します', '勉強し', '連用形'],
-        ['勉強した', '勉強し', '連用形'],
-        ['勉強しない', '勉強し', '未然形'],
-        ['勉強しよう', '勉強しよ', '未然形'],
-        ['勉強すれば', '勉強すれ', '仮定形'],
-        ['勉強しろ', '勉強しろ', '命令形'],
+      for (const [text, verbSurface, form] of [
+        ['勉強する', 'する', '終止形'],
+        ['勉強します', 'し', '連用形'],
+        ['勉強した', 'し', '連用形'],
+        ['勉強しない', 'し', '未然形'],
+        ['勉強しよう', 'しよ', '未然形'],
+        ['勉強すれば', 'すれ', '仮定形'],
+        ['勉強しろ', 'しろ', '命令形'],
       ] as const) {
         const result = parseReal(tokenizer, text);
+        expect(result.bunsetsu).toHaveLength(1);
         expect(result.bunsetsu[0]?.tango[0]).toMatchObject({
-          surface, baseForm: '勉強する', hinshi: '動詞', katsuyouType: 'サ変', katsuyoukei: form,
+          surface: '勉強', baseForm: '勉強', hinshi: '名詞', subHinshi: 'サ変接続',
         });
-        expect(result.bunsetsu[0]?.tango[0]?.rawMorphemes?.map((m) => m.surface).join('')).toBe(surface);
+        expect(result.bunsetsu[0]?.tango[1]).toMatchObject({
+          surface: verbSurface, baseForm: 'する', hinshi: '動詞', katsuyouType: 'サ変', katsuyoukei: form,
+        });
+        expect(result.bunsetsu[0]?.tango[1]?.rawMorphemes?.map((m) => m.surface)).toEqual([verbSurface]);
         expect(result.diagnostics).toEqual([]);
       }
+      const politePast = parseReal(tokenizer, '逮捕しました');
+      expect(politePast.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['逮捕しました']);
+      expect(politePast.bunsetsu[0]?.tango.slice(0, 2).map(({ surface, hinshi }) => [surface, hinshi])).toEqual([
+        ['逮捕', '名詞'],
+        ['し', '動詞'],
+      ]);
+      expect(politePast.bunsetsu[0]?.tango[1]).toMatchObject({ baseForm: 'する', katsuyouType: 'サ変' });
+      expect(politePast.diagnostics).toEqual([]);
       const separated = parseReal(tokenizer, '勉強をする');
       expect(separated.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['勉強を', 'する']);
       expect(separated.bunsetsu[0]?.tango[0]?.hinshi).toBe('名詞');

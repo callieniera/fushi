@@ -10,11 +10,10 @@ function continuesSahenBunsetsu(previous: Tango, next: Tango): boolean {
   const hasSahenNoun = previous.rawMorphemes?.some(
     ({ pos, posDetail1 }) => pos === '名詞' && posDetail1 === 'サ変接続',
   ) === true;
-  const hasLinkedSuru = next.rawMorphemes?.some(
-    ({ pos, baseForm, conjugatedForm }) =>
-      pos === '動詞' && baseForm === 'する' && conjugatedForm === '未然レル接続',
+  const hasSuruVerb = next.rawMorphemes?.some(
+    ({ pos, baseForm }) => pos === '動詞' && baseForm === 'する',
   ) === true;
-  return previous.end === next.start && hasSahenNoun && hasLinkedSuru;
+  return previous.end === next.start && hasSahenNoun && hasSuruVerb;
 }
 
 /** Group one independent word with all following dependent words. */
