@@ -6,7 +6,27 @@ export interface BunsetsuResult {
   diagnostics: Diagnostic[];
 }
 
-/** Group one independent word with all following dependent words. */
+function continuesSahenBunsetsu(previous: Tango, next: Tango): boolean {
+  const hasSahenNoun = previous.rawMorphemes?.some(
+    ({ pos, posDetail1 }) => pos === '名詞' && posDetail1 === 'サ変接続',
+  ) === true;
+  const hasLinkedSuru = next.rawMorphemes?.some(
+    ({ pos, baseForm, conjugatedForm }) =>
+      pos === '動詞' && baseForm === 'する' && conjugatedForm === '未然レル接続',
+  ) === true;
+  return previous.end === next.start && hasSahenNoun && hasLinkedSuru;
+}
+
+function continuesTeFormSubsidiaryVerbBunsetsu(previous: Tango, next: Tango): boolean {
+  const hasTeFormParticle = previous.rawMorphemes?.some(
+    ({ pos, posDetail1, surface }) =>
+      pos === '助詞' && posDetail1 === '接続助詞' && (surface === 'て' || surface === 'で'),
+  ) === true;
+  const isSubsidiaryVerb = next.hinshi === '動詞' && next.subHinshi === '補助動詞';
+  return previous.end === next.start && hasTeFormParticle && isSubsidiaryVerb;
+}
+
+/** Group independent words with their dependents, including linked サ変 and te-form subsidiary verbs. */
 export function groupModernBunsetsu(tango: readonly Tango[]): BunsetsuResult {
   const diagnostics: Diagnostic[] = [];
   const bunsetsu: Bunsetsu[] = [];
@@ -27,6 +47,17 @@ export function groupModernBunsetsu(tango: readonly Tango[]): BunsetsuResult {
 
   for (const token of tango) {
     if (token.isIndependent) {
+      const previous = current[current.length - 1];
+      if (
+        previous &&
+        (
+          continuesSahenBunsetsu(previous, token) ||
+          continuesTeFormSubsidiaryVerbBunsetsu(previous, token)
+        )
+      ) {
+        current.push(token);
+        continue;
+      }
       flush();
       current = [token];
     } else {

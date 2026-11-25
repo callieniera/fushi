@@ -55,7 +55,17 @@ function isPrefix(item: IndexedMorpheme): boolean {
   return item.raw.pos === '接頭詞' || item.raw.pos === '接頭辞';
 }
 
+function isVerbSuffix(item: IndexedMorpheme): boolean {
+  return item.raw.pos === '動詞' && item.raw.posDetail1 === '接尾';
+}
+
+function isReruAuxiliarySuffix(item: IndexedMorpheme): boolean {
+  return isVerbSuffix(item) &&
+    (item.raw.baseForm === 'れる' || item.raw.baseForm === 'られる');
+}
+
 function isSuffix(item: IndexedMorpheme): boolean {
+  if (isReruAuxiliarySuffix(item)) return false;
   return item.raw.posDetail1 === '接尾' || item.raw.pos === '接尾辞' || isVerbSuffix(item);
 }
 
@@ -65,7 +75,8 @@ function isSou(item: IndexedMorpheme): boolean {
 
 function isIndependentRaw(item: IndexedMorpheme): boolean {
   const { raw } = item;
-  if (raw.pos === '助詞' || raw.pos === '助動詞' || isPrefix(item) || isSuffix(item)) return false;
+  if (raw.pos === '助詞' || raw.pos === '助動詞' || isPrefix(item) ||
+    isSuffix(item) || isReruAuxiliarySuffix(item)) return false;
   // IPAdic fillers must stay separate until they are remapped to school grammar.
   if (raw.pos === 'フィラー') return false;
   return raw.posDetail1 !== '非自立';
@@ -89,11 +100,9 @@ function isSahenHost(item: IndexedMorpheme): boolean {
 }
 
 function isSuru(item: IndexedMorpheme): boolean {
-  return item.raw.pos === '動詞' && item.raw.baseForm === 'する' && item.raw.conjugationType?.startsWith('サ変') === true;
-}
-
-function isVerbSuffix(item: IndexedMorpheme): boolean {
-  return item.raw.pos === '動詞' && item.raw.posDetail1 === '接尾';
+  return item.raw.pos === '動詞' && item.raw.baseForm === 'する' &&
+    item.raw.conjugationType?.startsWith('サ変') === true &&
+    item.raw.conjugatedForm !== '未然レル接続';
 }
 
 function isOnaji(item: IndexedMorpheme): boolean {

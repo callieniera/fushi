@@ -1,26 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { parseModernMorphemes } from '../../src/modern/pipeline.js';
-import { adjective, auxiliary, da, morphemes, naStem, noun, particle, prefix, raw, suffix, verb } from './fixtures.js';
+import { adjective, auxiliary, da, morphemes, naStem, noun, particle, prefix, raw, suffix, symbol, verb } from './fixtures.js';
 
 describe('bunsetsu grouping and interacting rules', () => {
-  it('groups 食べている as 食べて / いる', () => {
+  it('groups 食べている in one bunsetsu without merging the words', () => {
     const result = parseModernMorphemes(morphemes([
       verb('食べ', '食べる', '一段', '連用形'),
       particle('て', '接続助詞'),
       verb('いる', 'いる', '一段', '基本形', '非自立'),
     ]));
-    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['食べて', 'いる']);
-    expect(result.bunsetsu[0]?.tango.map((t) => t.hinshi)).toEqual(['動詞', '助詞']);
-    expect(result.bunsetsu[1]?.tango[0]).toMatchObject({ hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true });
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['食べている']);
+    expect(result.bunsetsu[0]?.tango.map((t) => t.hinshi)).toEqual(['動詞', '助詞', '動詞']);
+    expect(result.bunsetsu[0]?.tango[2]).toMatchObject({
+      hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true,
+    });
   });
 
-  it('groups 食べてしまう as 食べて / しまう', () => {
+  it('groups 食べてしまう in one bunsetsu', () => {
     const result = parseModernMorphemes(morphemes([
       verb('食べ', '食べる', '一段', '連用形'),
       particle('て', '接続助詞'),
       verb('しまう', 'しまう', '五段・ワ行促音便', '基本形', '非自立'),
     ]));
-    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['食べて', 'しまう']);
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['食べてしまう']);
   });
 
   it('handles a full sentence with prefixes, suffixes, na-adjectives and auxiliaries', () => {
@@ -29,9 +31,9 @@ describe('bunsetsu grouping and interacting rules', () => {
       verb('食べ', '食べる', '一段', '連用形'), particle('て', '接続助詞'),
       verb('い', 'いる', '一段', '未然形', '非自立'), auxiliary('ない', '特殊・ナイ'),
     ]));
-    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['お菓子を', '食べて', 'いない']);
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['お菓子を', '食べていない']);
     expect(result.bunsetsu[0]?.tango[0]?.rawMorphemes).toHaveLength(2);
-    expect(result.bunsetsu[2]?.tango[1]).toMatchObject({ hinshi: '助動詞', subHinshi: '打消' });
+    expect(result.bunsetsu[1]?.tango[3]).toMatchObject({ hinshi: '助動詞', subHinshi: '打消' });
   });
 
   it('handles 静かではない without merging は into the adjectival verb', () => {
@@ -105,7 +107,7 @@ describe('bunsetsu grouping and interacting rules', () => {
       verb('読ん', '読む', '五段・マ行', '連用タ接続'), particle('で', '接続助詞'),
       verb('しまっ', 'しまう', '五段・ワ行促音便', '連用タ接続', '非自立'), auxiliary('た', '特殊・タ'),
     ]));
-    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['読んで', 'しまった']);
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['読んでしまった']);
     expect(result.bunsetsu[0]?.tango[0]).toMatchObject({ katsuyoukei: '連用形', katsuyouType: '五段' });
   });
 
@@ -204,7 +206,11 @@ describe('bunsetsu grouping and interacting rules', () => {
       auxiliary('ましょ', '特殊・マス', '未然ウ接続', 'ます'), auxiliary('う', '不変化型', '基本形', 'う'),
     ]));
     expect(result.bunsetsu.map((item) => item.tango.map((tango) => tango.surface).join('')))
-      .toEqual(['雨が', '降って', 'いるので', '傘を', '持って', '行きましょう']);
+      .toEqual(['雨が', '降っているので', '傘を', '持って', '行きましょう']);
+    expect(result.bunsetsu[1]?.tango[2]?.subHinshi).toBe('補助動詞');
+    expect(result.bunsetsu[4]?.tango[0]).toMatchObject({
+      surface: '行き', baseForm: '行く', subHinshi: '自立', katsuyoukei: '連用形',
+    });
     expect(result).toEqual({
       mode: 'modern',
       text: '雨が降っているので傘を持って行きましょう',
@@ -212,6 +218,104 @@ describe('bunsetsu grouping and interacting rules', () => {
       diagnostics: [],
     });
     expect(result.bunsetsu.every((item) => Object.keys(item).sort().join(',') === 'end,id,start,tango')).toBe(true);
+  });
+});
+
+describe('main-motion 行く/来る distinctions', () => {
+  it.each([
+    {
+      name: 'kanji after a transport verb',
+      input: [verb('持っ', '持つ', '五段・タ行', '連用タ接続'), particle('て', '接続助詞'), verb('行き', '行く', '五段・カ行促音便', '連用形', '非自立'), auxiliary('ます', '特殊・マス')],
+      surface: '行き',
+      bunsetsu: ['持って', '行きます'],
+    },
+    {
+      name: 'kanji 来る after で and a transport verb',
+      input: [verb('運ん', '運ぶ', '五段・バ行', '連用タ接続'), particle('で', '接続助詞'), verb('来る', '来る', 'カ変・来ル', '基本形', '非自立')],
+      surface: '来る',
+      bunsetsu: ['運んで', '来る'],
+    },
+  ])('classifies $name as main motion', ({ input, surface, bunsetsu }) => {
+    const result = parseModernMorphemes(morphemes(input));
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(bunsetsu);
+    const token = result.bunsetsu.flatMap((b) => b.tango).find((t) => t.surface === surface);
+    expect(token).toMatchObject({ hinshi: '動詞', subHinshi: '自立', isIndependent: true });
+    expect(token?.rawMorphemes?.[0]?.posDetail1).toBe('非自立');
+    expect(result.bunsetsu.flatMap((b) => b.tango).flatMap((t) => t.rawMorphemes ?? [])).toEqual(morphemes(input));
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: 'gradual decrease',
+      input: [noun('人口'), particle('が', '格助詞'), verb('減っ', '減る', '五段・ラ行', '連用タ接続'), particle('て', '接続助詞'), verb('いく', 'いく', '五段・カ行促音便', '基本形', '非自立')],
+      surface: 'いく',
+      bunsetsu: ['人口が', '減っていく'],
+    },
+    {
+      name: 'becoming accustomed',
+      input: [verb('慣れ', '慣れる', '一段', '連用形'), particle('て', '接続助詞'), verb('くる', 'くる', 'カ変・クル', '基本形', '非自立')],
+      surface: 'くる',
+      bunsetsu: ['慣れてくる'],
+    },
+    {
+      name: 'continuing to read',
+      input: [verb('読ん', '読む', '五段・マ行', '連用タ接続'), particle('で', '接続助詞'), verb('いく', 'いく', '五段・カ行促音便', '基本形', '非自立')],
+      surface: 'いく',
+      bunsetsu: ['読んでいく'],
+    },
+    {
+      name: 'becoming cold',
+      input: [adjective('寒く', '寒い', '連用テ接続'), verb('なっ', 'なる', '五段・ラ行', '連用タ接続'), particle('て', '接続助詞'), verb('くる', 'くる', 'カ変・クル', '基本形', '非自立')],
+      surface: 'くる',
+      bunsetsu: ['寒く', 'なってくる'],
+    },
+    {
+      name: 'kana after a transport verb',
+      input: [verb('持っ', '持つ', '五段・タ行', '連用タ接続'), particle('て', '接続助詞'), verb('いき', 'いく', '五段・カ行促音便', '連用形', '非自立'), auxiliary('ます', '特殊・マス')],
+      surface: 'いき',
+      bunsetsu: ['持っていきます'],
+    },
+    {
+      name: 'kanji after a non-curated host',
+      input: [verb('読ん', '読む', '五段・マ行', '連用タ接続'), particle('で', '接続助詞'), verb('来る', '来る', 'カ変・来ル', '基本形', '非自立')],
+      surface: '来る',
+      bunsetsu: ['読んで来る'],
+    },
+    {
+      name: 'goal particles are not classification signals',
+      input: [noun('学校'), particle('へ', '格助詞'), verb('戻っ', '戻る', '五段・ラ行', '連用タ接続'), particle('て', '接続助詞'), verb('行く', '行く', '五段・カ行促音便', '基本形', '非自立')],
+      surface: '行く',
+      bunsetsu: ['学校へ', '戻って行く'],
+    },
+  ])('preserves the subsidiary reading for $name', ({ input, surface, bunsetsu }) => {
+    const result = parseModernMorphemes(morphemes(input));
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(bunsetsu);
+    expect(result.bunsetsu.flatMap((b) => b.tango).find((t) => t.surface === surface))
+      .toMatchObject({ hinshi: '動詞', subHinshi: '補助動詞', isIndependent: true });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('does not reuse a goal particle from an earlier clause', () => {
+    const result = parseModernMorphemes(morphemes([
+      noun('学校'), particle('へ', '格助詞'),
+      verb('行っ', '行く', '五段・カ行促音便', '連用タ接続'), auxiliary('た', '特殊・タ'),
+      particle('ので', '接続助詞'), symbol('、'),
+      verb('読ん', '読む', '五段・マ行', '連用タ接続'), particle('で', '接続助詞'),
+      verb('いく', 'いく', '五段・カ行促音便', '基本形', '非自立'),
+    ]));
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join('')))
+      .toEqual(['学校へ', '行ったので', '、', '読んでいく']);
+    expect(result.bunsetsu.at(-1)?.tango.at(-1)?.subHinshi).toBe('補助動詞');
+  });
+
+  it('leaves an already independent verb after ては unchanged', () => {
+    const result = parseModernMorphemes(morphemes([
+      verb('持っ', '持つ', '五段・タ行', '連用タ接続'), particle('て', '接続助詞'),
+      particle('は', '係助詞'), verb('行き', '行く', '五段・カ行促音便', '連用形'), auxiliary('ます', '特殊・マス'),
+    ]));
+    expect(result.bunsetsu.map((b) => b.tango.map((t) => t.surface).join(''))).toEqual(['持っては', '行きます']);
+    expect(result.bunsetsu[1]?.tango[0]).toMatchObject({ subHinshi: '自立', isIndependent: true });
   });
 });
 

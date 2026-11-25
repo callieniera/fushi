@@ -33,14 +33,15 @@ Fushi starts a new phrase segment at each main word and attaches the supporting 
 
 **Input:** `子どもたちがお菓子を食べている`
 
-**Result:** `子どもたちが | お菓子を | 食べて | いる`
+**Result:** `子どもたちが | お菓子を | 食べている`
 
 | Phrase segment (文節) | Word pieces | What Fushi found |
 | --- | --- | --- |
 | `子どもたちが` | `子どもたち` + `が` | `子ども` and the suffix (接尾辞) `たち` become one noun |
 | `お菓子を` | `お菓子` + `を` | The prefix (接頭辞) `お` and `菓子` become one noun |
-| `食べて` | `食べ` + `て` | A lower-monograde verb (下一段動詞) in the continuative form (連用形), followed by the connecting particle (接続助詞) `て` |
-| `いる` | `いる` | A supplementary verb (補助動詞) of the upper-monograde type (上一段), in the sentence-ending form (終止形); it forms its own segment |
+| `食べている` | `食べ` + `て` + `いる` | A lower-monograde verb (下一段動詞), the connecting particle (接続助詞) `て`, and a supplementary verb (補助動詞); the word pieces remain separate within one segment |
+
+`調べています` follows the same grouping rule: it is one segment with the word pieces `調べ` + `て` + `い` + `ます`.
 
 ### 1.3 A longer sentence with a polite supporting verb
 
@@ -97,24 +98,23 @@ Fushi starts a new phrase segment at each main word and attaches the supporting 
 
 **Input:** `この大きな犬は小さい猫と遊んでいる`
 
-**Result:** `この | 大きな | 犬は | 小さい | 猫と | 遊んで | いる`
+**Result:** `この | 大きな | 犬は | 小さい | 猫と | 遊んでいる`
 
 `この` and `大きな` remain separate segments containing prenominal words (連体詞)—words that come before and describe nouns. `小さい` is an adjective (形容詞) in the noun-modifying form (連体形).
 
-In `遊んで`, the pronunciation changes, but Fushi still connects `遊ん` to the base form `遊ぶ`. It identifies a five-grade conjugation (五段) and the continuative form (連用形). The supplementary verb (補助動詞) `いる` forms a separate segment.
+In `遊んで`, the pronunciation changes, but Fushi still connects `遊ん` to the base form `遊ぶ`. It identifies a five-grade conjugation (五段) and the continuative form (連用形). The supplementary verb (補助動詞) `いる` remains a separate word within the same segment.
 
 ### 1.8 Several actions and “try doing”
 
 **Input:** `新しい辞書を使って古文を読んでみた`
 
-**Result:** `新しい | 辞書を | 使って | 古文を | 読んで | みた`
+**Result:** `新しい | 辞書を | 使って | 古文を | 読んでみた`
 
 | Phrase segment (文節) | Word pieces | Conjugation (活用) |
 | --- | --- | --- |
 | `新しい` | `新しい` | Adjective (形容詞), noun-modifying form (連体形) |
 | `使って` | `使っ` + `て` | `使う`: five-grade (五段), continuative form (連用形) |
-| `読んで` | `読ん` + `で` | `読む`: five-grade (五段), continuative form (連用形) |
-| `みた` | `み` + `た` | Supplementary verb (補助動詞) `みる`: lower monograde (下一段), continuative form (連用形); `た`: special *ta* type (特殊・タ), sentence-ending form (終止形) |
+| `読んでみた` | `読ん` + `で` + `み` + `た` | `読む`: five-grade (五段), continuative form (連用形); supplementary verb (補助動詞) `みる`; `た`: special *ta* type (特殊・タ), sentence-ending form (終止形) |
 
 ### 1.9 An irregular verb and a helper showing likelihood
 
@@ -132,11 +132,11 @@ In `遊んで`, the pronunciation changes, but Fushi still connects `遊ん` to 
 
 **Input:** `赤いのを選んでください`
 
-**Result:** `赤い | のを | 選んで | ください`
+**Result:** `赤い | のを | 選んでください`
 
 `赤い` is an adjective (形容詞) in the noun-modifying form (連体形). `の` remains a nominalizing noun (形式名詞): here it stands for the thing being chosen. `を` remains a case-marking particle (格助詞).
 
-`選ん` maps to the base form `選ぶ`, with five-grade conjugation (五段) and the continuative form (連用形). `ください` is a supplementary verb (補助動詞) from `くださる`, in the imperative form (命令形) used for requests or commands.
+`選ん` maps to the base form `選ぶ`, with five-grade conjugation (五段) and the continuative form (連用形). `ください` is a supplementary verb (補助動詞) from `くださる`, in the imperative form (命令形) used for requests or commands. `食べてください` follows the same grouping rule.
 
 ### 1.11 A separate segment for a supporting adjective
 
@@ -171,15 +171,17 @@ In `遊んで`, the pronunciation changes, but Fushi still connects `遊ん` to 
 
 The supported modern pipeline stops after ordinary 文節 formation. It does not generate sentence components（文の成分）, dependency targets（係り受け）, clauses（節）, sentence types（単文・複文・重文）, or 連文節 groups.
 
-For example, `雨が降っているので傘を持って行きましょう` produces six ordinary 文節:
+For example, `雨が降っているので傘を持って行きましょう` produces five ordinary 文節:
 
-> `雨が | 降って | いるので | 傘を | 持って | 行きましょう`
+> `雨が | 降っているので | 傘を | 持って | 行きましょう`
 
-The real-IPAdic regression checks that `いる` and `行き` remain independent school-grammar subsidiary verbs（補助動詞） in their own 文節. It also checks word surfaces, base forms, POS, conjugation, source offsets, and the absence of sentence-level diagnostics. A multi-clause example retains punctuation as its own 文節 and reports the existing `MODERN_POS_UNSUPPORTED` warning for that punctuation.
+The real-IPAdic regression checks that aspectual `いる` remains a separate subsidiary verb（補助動詞） within the preceding 文節, while main-motion `行き` is an ordinary independent verb（自立） and starts its own 文節. Related cases cover kanji `行く・来る` after curated transport verbs, plus unchanged kana, non-curated-host, and aspectual negatives such as `持っていきます`, `読んで来る`, `減っていく`, and `慣れてくる`. The original IPAdic `非自立` evidence remains attached to the raw morpheme. These contextual labels are heuristic and do not add sentence-level analysis.
+
+The regressions also check word surfaces, base forms, POS, conjugation, source offsets, and the absence of sentence-level diagnostics. A multi-clause example retains punctuation as its own 文節 and reports the existing `MODERN_POS_UNSUPPORTED` warning for that punctuation.
 
 The former sentence analyzer and its focused tests are preserved under [`experimental/sentence-analysis`](./experimental/sentence-analysis/) as reference-only source. They are not supported exports and are not included in default test discovery.
 
-**Verified library run:** 207 core tests and 24 kuromoji-engine tests passed with Vitest 4.1.12 on November 24, 2026. The library build, core/engine/browser typechecks, and both Chromium package integration tests also passed. Learning-app migration and validation are tracked separately.
+**Verified library run:** 293 core tests and 33 kuromoji-engine tests passed with Vitest 4.1.12 on November 25, 2026. The library build and core/engine/browser/learning-app typechecks passed. Content validation and 22 learning-app unit tests also passed. The two Chromium package integration tests were last verified on November 24, 2026 and were not rerun for this change.
 
 ## 3. Conjugation Results (活用)
 
