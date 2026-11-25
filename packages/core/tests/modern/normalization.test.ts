@@ -318,4 +318,13 @@ describe('normalization boundaries and source preservation', () => {
     expect(result.bunsetsu[1]?.tango[0]?.subHinshi).toBeUndefined();
     expect(result.diagnostics.some((d) => d.code === 'MODERN_POS_UNSUPPORTED')).toBe(false);
   });
+
+  it('keeps 記号 separate from adjacent prefixes and suffixes', () => {
+    const result = parseModernMorphemes(morphemes([prefix('お'), symbol('」'), suffix('さ')]));
+    expect(result.bunsetsu.map((bunsetsu) => bunsetsu.tango.map((token) => token.surface))).toEqual([
+      ['お'],
+      ['」'],
+      ['さ'],
+    ]);
+  });
 });

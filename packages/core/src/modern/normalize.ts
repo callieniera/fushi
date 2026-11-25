@@ -196,7 +196,7 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
       replacements.delete(i + 1);
       continue;
     }
-    if (consumed.has(i + 1) || !isIndependentRaw(next)) continue;
+    if (consumed.has(i + 1) || next.raw.pos === '記号' || !isIndependentRaw(next)) continue;
     consumed.add(i);
     consumed.add(i + 1);
     replacements.set(
@@ -214,6 +214,7 @@ export function normalizeModernMorphemes(morphemes: readonly IndexedMorpheme[]):
     const suffix = morphemes[i];
     if (!previous || !suffix || consumed.has(i)) continue;
     if (!isSuffix(suffix)) continue;
+    if (previous.raw.pos === '記号') continue;
     // Skip suffix merging for あのさ (filler + special suffix)
     if (isAnoSaFiller(previous, suffix)) continue;
     const previousReplacement = replacements.get(i - 1);

@@ -54,7 +54,10 @@ test('word results and diagnostics localize and clear with the result', async ({
       body: `export function createKuromojiEngine() {
         return { parseModern: async (text) => ({
           mode: 'modern', text,
-          bunsetsu: [{ id: 'fixture-b0', start: 0, end: text.length, tango: [{ id: 'fixture-t0', surface: text, hinshi: '名詞', isIndependent: true, start: 0, end: text.length }] }],
+          bunsetsu: [
+            { id: 'fixture-b0', start: 0, end: text.length, tango: [{ id: 'fixture-t0', surface: text, hinshi: '名詞', isIndependent: true, start: 0, end: text.length }] },
+            { id: 'fixture-b1', start: text.length, end: text.length, tango: [{ id: 'fixture-t1', surface: '。', hinshi: '記号', isIndependent: true, start: text.length, end: text.length }] },
+          ],
           diagnostics: [{ code: 'FIXTURE_UNKNOWN', message: 'Internal details', severity: 'warning', start: 0, end: text.length }],
         }) };
       }`,
@@ -63,6 +66,7 @@ test('word results and diagnostics localize and clear with the result', async ({
   await page.goto('/#/sandbox');
   await page.getByLabel('Japanese sentence (up to 1,000 characters)').fill('未知');
   await page.getByRole('button', { name: 'Explore sentence' }).click();
+  await expect(page.getByText('Your sentence has 1 phrase segments. Review any notes below.')).toBeVisible();
   const diagnostic = page.locator('[data-diagnostic-code="FIXTURE_UNKNOWN"]');
   await expect(diagnostic).toContainText('The analyzer could not fully support this part.');
   await expect(diagnostic).toContainText('Affected text: 未知');
@@ -71,6 +75,7 @@ test('word results and diagnostics localize and clear with the result', async ({
   await page.getByRole('button', { name: 'Switch to Japanese', exact: true }).click();
   await page.getByLabel('日本語の文（1,000文字まで）').fill('未知');
   await page.getByRole('button', { name: '文を調べる', exact: true }).click();
+  await expect(page.getByText('文節は1個です。下の注意も確認してください。')).toBeVisible();
   await expect(page.getByRole('region', { name: '結果の確認ポイント', exact: true })).toContainText('対象の表現: 未知');
   await page.getByRole('button', { name: 'クリア', exact: true }).click();
   await expect(page.locator('.sandbox-result')).toBeEmpty();

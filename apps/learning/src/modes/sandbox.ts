@@ -53,7 +53,10 @@ export function sandboxView(sandbox = new ModernSandbox(), language: Language = 
     status.textContent = sandbox.status === 'ready' ? t('analyzing') : t('loadingAnalyzer');
     try {
       const result = await sandbox.parse(input.value);
-      status.textContent = t('analysisComplete', { count: result.bunsetsu.length });
+      const phraseSegmentCount = result.bunsetsu.filter(
+        ({ tango }) => !tango.some(({ hinshi }) => hinshi === '記号'),
+      ).length;
+      status.textContent = t('analysisComplete', { count: phraseSegmentCount });
       renderResult(result);
     } catch {
       status.textContent = t('analysisError');

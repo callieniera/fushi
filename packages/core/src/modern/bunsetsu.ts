@@ -36,6 +36,13 @@ export function groupModernBunsetsu(tango: readonly Tango[]): BunsetsuResult {
   };
 
   for (const token of tango) {
+    if (token.hinshi === '記号') {
+      flush();
+      current = [token];
+      flush();
+      continue;
+    }
+
     if (token.isIndependent) {
       const previous = current[current.length - 1];
       if (previous && continuesSahenBunsetsu(previous, token)) {
