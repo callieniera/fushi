@@ -137,10 +137,12 @@ Fushi currently recognizes these combinations:
 | --- | --- | --- |
 | Adjectival stem + one permitted ending | 形容動詞 | 静か + だ、静か + な、静か + に |
 | そう or よう + one permitted ending | 助動詞 | そう + だ、そう + です、よう + な |
-| サ変接続 noun + immediately adjacent する | One サ変 動詞 | 勉強 + する |
+| サ変接続 noun + immediately adjacent する (except 未然レル接続) | One サ変 動詞 | 勉強 + する |
 | 同じ + an inflecting だ ending | 形容動詞 | 同じ + だ |
 | Prefix + suitable independent host | Usually one word | お + 菓子 |
 | Suffix + suitable independent host | Noun, adjectival stem, or verb according to the suffix | 子ども + たち、科学 + 的、痛 + がる |
+
+IPAdic can label **れ** in a passive form as a verb suffix. Fushi preserves the school-word boundaries and remaps it to an auxiliary: **逮捕された** becomes **逮捕 / さ / れ / た**.
 
 The permitted adjectival endings are **だ・だろ・だっ・で・に・な・なら**, with **です** handled as a polite terminal ending for reconstructed adjectival and auxiliary-stem words. **勉強をする** remains separate because を interrupts the noun–する sequence. **同じな** remains attributive 連体詞 usage rather than being forced into the inflecting pattern.
 
@@ -193,7 +195,7 @@ The main form translations are:
 
 | IPAdic form | School-grammar form |
 | --- | --- |
-| 未然形、未然ウ接続、未然形サ・セ・シ | 未然形 |
+| 未然形、未然ウ接続、未然形サ・セ・シ、未然レル接続 | 未然形 |
 | 連用形、連用タ接続、連用テ接続、連用ニ接続、連用ゴザイ接続 | 連用形 |
 | 基本形 | Provisionally 終止形, then checked against context |
 | 体言接続、体言接続特殊・特殊２ | 連体形, with a limited sentence-final check |
@@ -219,11 +221,13 @@ These rules cover only selected patterns. They are not a complete understanding 
 
 ### Step 6: Form bunsetsu
 
-The grouping rule is simple:
+The default grouping rule is:
 
 1. Start a new bunsetsu at an independent word.
 2. Attach following dependent words to it.
 3. Repeat at the next independent word.
+
+A directly adjacent サ変接続 noun and the 未然レル接続 form of **する** remain separate words but stay in the same bunsetsu.
 
 Thus:
 

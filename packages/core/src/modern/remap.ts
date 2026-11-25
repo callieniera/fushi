@@ -46,6 +46,7 @@ const KATSUYOUKEI: Readonly<Record<string, ModernKatsuyoukei>> = {
   未然形サ: '未然形',
   未然形セ: '未然形',
   未然形シ: '未然形',
+  未然レル接続: '未然形',
   連用形: '連用形',
   連用タ接続: '連用形',
   連用テ接続: '連用形',
@@ -335,8 +336,11 @@ export function remapModernTokens(tokens: readonly NormalizedToken[]): RemapResu
       }
     }
 
-    if (raw.pos === '助動詞' && (raw.baseForm === 'れる' || raw.baseForm === 'られる' ||
-      raw.surface === 'れる' || raw.surface === 'られる')) {
+    if (
+      (raw.pos === '助動詞' || (raw.pos === '動詞' && raw.posDetail1 === '接尾')) &&
+      (raw.baseForm === 'れる' || raw.baseForm === 'られる' ||
+        raw.surface === 'れる' || raw.surface === 'られる')
+    ) {
       hinshi = '助動詞';
       independent = false;
       subHinshi = '受身・自発・可能・尊敬';

@@ -192,6 +192,37 @@ describe('real kuromoji dictionary integration', () => {
     });
   });
 
+  it('preserves school-word boundaries in a サ変 passive form', async () => {
+    await withRealTokenizer((tokenizer) => {
+      const result = parseReal(tokenizer, '逮捕された');
+      const tokens = result.bunsetsu.flatMap(({ tango }) => tango);
+
+      expect(tokens.map(({ surface, hinshi }) => [surface, hinshi])).toEqual([
+        ['逮捕', '名詞'],
+        ['さ', '動詞'],
+        ['れ', '助動詞'],
+        ['た', '助動詞'],
+      ]);
+      expect(result.bunsetsu.map(({ tango }) => tango.map(({ surface }) => surface).join('')))
+        .toEqual(['逮捕された']);
+      expect(tokens[0]).toMatchObject({ baseForm: '逮捕', subHinshi: 'サ変接続' });
+      expect(tokens[1]).toMatchObject({
+        baseForm: 'する',
+        katsuyouType: 'サ変',
+        katsuyoukei: '未然形',
+      });
+      expect(tokens[2]).toMatchObject({
+        baseForm: 'れる',
+        subHinshi: '受身・自発・可能・尊敬',
+        katsuyouType: '下一段',
+        katsuyoukei: '連用形',
+        isIndependent: false,
+      });
+      expect(tokens[2]?.rawMorphemes?.map(({ surface }) => surface)).toEqual(['れ']);
+      expect(result.diagnostics.map(({ code }) => code)).toEqual(['MODERN_RERU_AMBIGUOUS']);
+    });
+  });
+
   it('reconstructs adjectival, そう, よう, and 同じ words through real IPAdic', async () => {
     await withRealTokenizer((tokenizer) => {
       for (const [text, surface, form] of [
