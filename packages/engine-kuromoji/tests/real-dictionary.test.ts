@@ -61,6 +61,34 @@ describe('real kuromoji dictionary integration', () => {
     });
   });
 
+  it('maps real IPAdic 係助詞 to 副助詞 without changing 格助詞', async () => {
+    await withRealTokenizer((tokenizer) => {
+      for (const [text, surface] of [
+        ['私は本を読む', 'は'],
+        ['私も行く', 'も'],
+        ['君こそ正しい', 'こそ'],
+        ['これさえあれば', 'さえ'],
+        ['これしかない', 'しか'],
+      ] as const) {
+        const result = parseReal(tokenizer, text);
+        const particle = result.bunsetsu.flatMap((b) => b.tango).find((tango) => tango.surface === surface);
+        expect(particle).toMatchObject({ hinshi: '助詞', subHinshi: '副助詞' });
+        expect(particle?.rawMorphemes?.[0]?.posDetail1).toBe('係助詞');
+      }
+
+      const demo = parseReal(tokenizer, '子供でも分かる');
+      expect(demo.bunsetsu[0]?.tango.slice(1).map((tango) => [tango.surface, tango.subHinshi])).toEqual([
+        ['で', '格助詞'], ['も', '副助詞'],
+      ]);
+
+      for (const [text, surface] of [['彼なぞ来ない', 'なぞ'], ['彼なんて知らない', 'なんて']] as const) {
+        const result = parseReal(tokenizer, text);
+        const particle = result.bunsetsu.flatMap((b) => b.tango).find((tango) => tango.surface === surface);
+        expect(particle).toMatchObject({ hinshi: '助詞', subHinshi: '副助詞' });
+      }
+    });
+  });
+
   it('maps 連体詞 uses and hesitation uses of あの to school grammar', async () => {
     await withRealTokenizer((tokenizer) => {
       const standalone = parseReal(tokenizer, 'あの');

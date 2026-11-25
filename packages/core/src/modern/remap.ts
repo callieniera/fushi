@@ -69,6 +69,10 @@ const INDEPENDENT_POS = new Set<Hinshi>([
   '動詞', '形容詞', '形容動詞', '名詞', '副詞', '連体詞', '接続詞', '感動詞', '記号',
 ]);
 
+const BINDING_PARTICLES_AS_ADVERBIAL = new Set([
+  'は', 'も', 'こそ', 'さえ', 'でも', 'しか', 'なぞ', 'なんて',
+]);
+
 function isNaiAfterVerb(tokens: readonly NormalizedToken[], index: number): boolean {
   const previous = tokens[index - 1];
   if (!previous) return false;
@@ -131,6 +135,9 @@ function noSubHinshi(token: NormalizedToken): string | undefined {
   if (token.forcedSubHinshi) return token.forcedSubHinshi;
   const raw = token.source.raw;
   if (raw.pos === '助詞') {
+    if (raw.posDetail1 === '係助詞' && BINDING_PARTICLES_AS_ADVERBIAL.has(raw.baseForm ?? raw.surface)) {
+      return '副助詞';
+    }
     if (raw.surface === 'の') {
       if (raw.posDetail1 === '連体化') return '格助詞';
       if (raw.posDetail1 === '終助詞') return '終助詞';

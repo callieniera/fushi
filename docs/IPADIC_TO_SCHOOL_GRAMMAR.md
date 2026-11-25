@@ -38,7 +38,7 @@ The important change is **静か + な → 静かな**. School grammar treats th
 | Word | School-grammar interpretation |
 | --- | --- |
 | 私 | Noun（名詞） |
-| は | Particle（助詞）; more specifically, a topic/binding particle（係助詞） |
+| は | Particle（助詞）; more specifically, an adverbial particle（副助詞） |
 | 静かな | Adjectival verb（形容動詞）, attributive form（連体形）; dictionary form 静かだ |
 | 本 | Noun（名詞） |
 | を | Case particle（格助詞） |
@@ -160,7 +160,7 @@ Most familiar labels pass through directly:
 | 接続詞 | 接続詞 |
 | 感動詞 | 感動詞 |
 | 助動詞 | 助動詞 |
-| 助詞 | 助詞; most detailed particle labels are copied |
+| 助詞 | 助詞; most detailed particle labels are copied, except for the selected 係助詞 conversion below |
 | フィラー | Usually 感動詞 |
 | 記号 | Fushi's extra `記号` category |
 | その他 | **Unhandled:** guessed to be noun-like, with a warning |
@@ -168,6 +168,8 @@ Most familiar labels pass through directly:
 IPAdic does not need a top-level `形容動詞` label for the common case. Fushi derives it from **名詞・形容動詞語幹** plus a permitted ending.
 
 An unsupported top-level category is not discarded. It is retained as a noun-like token with `MODERN_POS_UNSUPPORTED`. This preserves the text but is only a fallback, not a valid grammatical conclusion.
+
+For Modern Japanese, Fushi does not use 係助詞 as an output subtype for **は・も・こそ・さえ・でも・しか・なぞ・なんて**. When IPAdic labels one of these forms as 係助詞, Fushi outputs **副助詞**. The case particles **が・の・を・に・へ・と・より・から・で・や** remain **格助詞**, subject to the existing contextual rules. IPAdic tokenizes **でも** as **で + も**, so those tokens remain 格助詞 and 副助詞 respectively. This Modern Japanese convention does not change the separate Classical Japanese 係助詞 analysis.
 
 ### Step 4: Translate conjugation
 

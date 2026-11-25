@@ -7,6 +7,7 @@ interface PosCase {
   input: RawSpec[];
   hinshi: string;
   independent: boolean;
+  subHinshi?: string;
   form?: string;
   type?: string;
 }
@@ -71,7 +72,7 @@ const cases: PosCase[] = [
   { name: '接続詞', input: [raw('しかし', '接続詞')], hinshi: '接続詞', independent: true },
   { name: '感動詞', input: [raw('こんにちは', '感動詞')], hinshi: '感動詞', independent: true },
   { name: '格助詞', input: [noun('本'), particle('を', '格助詞')], hinshi: '助詞', independent: false },
-  { name: '係助詞', input: [noun('私'), particle('は', '係助詞')], hinshi: '助詞', independent: false },
+  { name: '係助詞はを副助詞に変換する', input: [noun('私'), particle('は', '係助詞')], hinshi: '助詞', independent: false, subHinshi: '副助詞' },
   { name: '副助詞', input: [noun('私'), particle('だけ', '副助詞')], hinshi: '助詞', independent: false },
   { name: '接続助詞', input: [verb('読み', '読む', '五段・マ行', '連用形'), particle('ながら', '接続助詞')], hinshi: '助詞', independent: false },
   { name: '終助詞', input: [verb('読む', '読む', '五段・マ行', '基本形'), particle('よ', '終助詞')], hinshi: '助詞', independent: false },
@@ -85,12 +86,41 @@ const cases: PosCase[] = [
   { name: '助動詞べし', input: [verb('読む', '読む', '五段・マ行', '基本形'), auxiliary('べし', '文語・ベシ')], hinshi: '助動詞', independent: false, form: '終止形', type: '文語・ベシ' },
 ];
 
+describe('particle subtype remapping', () => {
+  it.each(['は', 'も', 'こそ', 'さえ', 'でも', 'しか', 'なぞ', 'なんて'])(
+    'maps IPAdic 係助詞 %s to 副助詞',
+    (surface) => {
+      const result = parseModernMorphemes(morphemes([noun('私'), particle(surface, '係助詞')]));
+      expect(result.bunsetsu[0]?.tango[1]).toMatchObject({ surface, hinshi: '助詞', subHinshi: '副助詞' });
+    },
+  );
+
+  it.each(['が', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や'])(
+    'preserves 格助詞 %s',
+    (surface) => {
+      const result = parseModernMorphemes(morphemes([noun('私'), particle(surface, '格助詞')]));
+      expect(result.bunsetsu[0]?.tango[1]).toMatchObject({ surface, hinshi: '助詞', subHinshi: '格助詞' });
+    },
+  );
+
+  it('preserves 格助詞 の with its IPAdic 連体 detail', () => {
+    const result = parseModernMorphemes(morphemes([noun('私'), particle('の', '格助詞', '連体'), noun('本')]));
+    expect(result.bunsetsu[0]?.tango[1]).toMatchObject({ surface: 'の', hinshi: '助詞', subHinshi: '格助詞' });
+  });
+
+  it('preserves an unlisted IPAdic 係助詞 subtype', () => {
+    const result = parseModernMorphemes(morphemes([noun('私'), particle('など', '係助詞')]));
+    expect(result.bunsetsu[0]?.tango[1]).toMatchObject({ surface: 'など', subHinshi: '係助詞' });
+  });
+});
+
 describe('ten school-grammar parts of speech and six conjugation bases', () => {
-  it.each(cases)('$name', ({ input, hinshi, independent, form, type }) => {
+  it.each(cases)('$name', ({ input, hinshi, independent, subHinshi, form, type }) => {
     const result = parseModernMorphemes(morphemes(input));
     const tokens = result.bunsetsu.flatMap((b) => b.tango);
     const target = independent ? tokens.find((token) => token.hinshi === hinshi) : tokens.at(-1);
     expect(target).toMatchObject({ hinshi, isIndependent: independent });
+    if (subHinshi) expect(target?.subHinshi).toBe(subHinshi);
     if (form) expect(target?.katsuyoukei).toBe(form);
     if (type) expect(target?.katsuyouType).toBe(type);
     if (input.some((item) => item.pos === 'フィラー')) {

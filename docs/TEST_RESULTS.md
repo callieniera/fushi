@@ -24,7 +24,7 @@ Fushi starts a new phrase segment at each main word and attaches the supporting 
 | Phrase segment (文節) | Word piece | Word type (品詞) | Conjugation pattern (活用の種類) | Form used here (活用形) |
 | --- | --- | --- | --- | --- |
 | `私は` | `私` | Noun (名詞); pronoun (代名詞) | — | — |
-| `私は` | `は` | Particle (助詞); binding particle (係助詞) | — | — |
+| `私は` | `は` | Particle (助詞); adverbial particle (副助詞) | — | — |
 | `本を` | `本` | Noun (名詞) | — | — |
 | `本を` | `を` | Particle (助詞); case-marking particle (格助詞) | — | — |
 | `読む` | `読む` | Verb (動詞) | Five-grade (五段) | Sentence-ending form (終止形) |
